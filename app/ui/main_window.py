@@ -39,6 +39,9 @@ from app.services.settings_manager import SettingsManager  # pyre-ignore[21]
 
 logger = logging.getLogger(__name__)
 
+# Application Version
+APP_VERSION = "1.2.0"
+
 
 # Platform icons
 PLATFORM_ICONS = {
@@ -182,6 +185,46 @@ class EngineUpdateThread(QThread):
             self.finished.emit(False, str(e))
 
 
+class AppUpdateThread(QThread):
+    """Background thread to check and apply app updates from GitHub"""
+    output = Signal(str)
+    finished = Signal(bool, str, bool) # success, message, restart_required
+    
+    def run(self):
+        try:
+            # 1. Fetch from remote
+            self.output.emit("🔍 Pinging GitHub HQ for new releases...\n")
+            subprocess.run(["git", "fetch", "origin", "main"], check=True, capture_output=True, text=True)
+            
+            # 2. Check for differences
+            status = subprocess.run(["git", "status", "-uno"], check=True, capture_output=True, text=True)
+            if "Your branch is up to date" in status.stdout:
+                self.output.emit("✅ You are already using the latest version of SMdown.\n")
+                self.finished.emit(True, "Aplikasi sudah dalam versi terbaru.", False)
+                return
+
+            # 3. Pull changes
+            self.output.emit("🚀 New code detected! Pulling latest improvements...\n")
+            pull = subprocess.run(["git", "pull", "origin", "main"], check=True, capture_output=True, text=True)
+            self.output.emit(pull.stdout + "\n")
+            
+            # 4. Update dependencies
+            self.output.emit("📦 Syncing dependencies (requirements.txt)...\n")
+            pip = subprocess.run(["python3", "-m", "pip", "install", "-r", "requirements.txt"], check=True, capture_output=True, text=True)
+            self.output.emit(pip.stdout + "\n")
+            
+            self.output.emit("✨ Update complete! Mission accomplished.\n")
+            self.finished.emit(True, "Update berhasil! Silakan restart aplikasi untuk menerapkan perubahan.", True)
+            
+        except subprocess.CalledProcessError as e:
+            msg = e.stderr if e.stderr else str(e)
+            self.output.emit(f"❌ Error during update: {msg}\n")
+            self.finished.emit(False, f"Update gagal: {msg}", False)
+        except Exception as e:
+            self.output.emit(f"❌ Unexpected error: {str(e)}\n")
+            self.finished.emit(False, str(e), False)
+
+
 class SettingsDialog(QDialog):
     """Professional settings dialog with engine update capabilities"""
     
@@ -301,6 +344,18 @@ class SettingsDialog(QDialog):
         
         layout.addWidget(engine_group)
         
+        # Section 3: App Status & Update
+        app_group = QGroupBox(f"App Version v{APP_VERSION}")
+        app_group.setStyleSheet(loc_group.styleSheet())
+        app_layout = QVBoxLayout(app_group)
+        
+        self.app_update_btn = QPushButton("✨ Check for App Updates (OTA)")
+        self.app_update_btn.setStyleSheet(self.update_btn.styleSheet())
+        self.app_update_btn.clicked.connect(self._on_update_app)
+        app_layout.addWidget(self.app_update_btn)
+        
+        layout.addWidget(app_group)
+        
         layout.addStretch()
         
         # Bottom Buttons
@@ -358,6 +413,32 @@ class SettingsDialog(QDialog):
         else:
             QMessageBox.critical(self, "Update Failed", f"Engine update encountered an error:\n{full_output[:200]}...")
             self.log_text.setText("Status: FAILED - Barrier detected.")
+
+    def _on_update_app(self):
+        self.app_update_btn.setEnabled(False)
+        self.app_update_btn.setText("Updating SMdown...")
+        self.log_area.show()
+        self.log_text.setText("Initiating OTA Protocol: git stack update\n")
+        
+        self._app_thread = AppUpdateThread()
+        self._app_thread.output.connect(self._append_log)
+        self._app_thread.finished.connect(self._on_app_update_finished)
+        self._app_thread.start()
+
+    def _on_app_update_finished(self, success, message, restart_required):
+        self.app_update_btn.setEnabled(True)
+        self.app_update_btn.setText("✨ Check for App Updates (OTA)")
+        
+        if success:
+            if restart_required:
+                QMessageBox.information(self, "Update Success", message)
+                self.log_text.setText("Status: RESTART REQUIRED - New version installed.")
+            else:
+                QMessageBox.information(self, "Up to Date", message)
+                self.log_text.setText("Status: COMPLETED - Operating at peak performance.")
+        else:
+            QMessageBox.critical(self, "Update Failed", message)
+            self.log_text.setText("Status: HALTED - Update failed.")
 
 
 class AboutDialog(QDialog):

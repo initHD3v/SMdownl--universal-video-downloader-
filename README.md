@@ -1,9 +1,9 @@
-# SMdown - Elegant Media Liberation for macOS
+# SMdown - unversal platform media downloader 
 
 <div align="center">
   <img src="https://raw.githubusercontent.com/initHD3v/SMdownl--universal-video-downloader-/main/assets/icon.png" width="128" height="128" alt="SMdown Icon">
   <h3>🎬 Universal Video Downloader for the Modern Human</h3>
-  <p><i>Karena terkadang "Save Post" saja tidak cukup untuk memuaskan hasrat kepemilikan digital Anda.</i></p>
+  <p><i>Karena terkadang "Save Post" saja tidak cukup untuk memuaskan hasrat kepemilikan digital </i></p>
 </div>
 
 ---

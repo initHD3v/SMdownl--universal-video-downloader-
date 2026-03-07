@@ -236,8 +236,8 @@ class SettingsDialog(QDialog):
         self.setup_ui()
     
     def setup_ui(self):
-        self.setWindowTitle("Settings & Engine Control")
-        self.setFixedSize(500, 450)
+        self.setWindowTitle("SMdown Settings")
+        self.setFixedSize(550, 600)
         
         # Center dialog
         if self.parent():
@@ -247,78 +247,182 @@ class SettingsDialog(QDialog):
                 parent_geo.center().y() - self.height() // 2
             )
             
-        self.setStyleSheet(f"background-color: {self.colors['window_bg']};")
-        
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(30, 30, 30, 30)
-        layout.setSpacing(20)
-        
-        # Header
-        header = QLabel("⚙️ Settings & Tools")
-        header.setFont(QFont("SF Pro Display", 20, QFont.Bold))
-        header.setStyleSheet(f"color: {self.colors['text_primary']};")
-        layout.addWidget(header)
-        
-        # Section 1: Download Location
-        loc_group = QGroupBox("Download Location")
-        loc_group.setStyleSheet(f"""
-            QGroupBox {{
-                color: {self.colors['text_secondary']};
-                font-weight: bold;
-                border: 1px solid {self.colors['border_light']};
-                border-radius: 12px;
-                margin-top: 20px;
-                padding-top: 15px;
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {self.colors['window_bg']};
             }}
-            QGroupBox::title {{
-                subcontrol-origin: margin;
-                subcontrol-position: top left;
-                left: 15px;
-                padding: 0 5px;
+            QLabel {{
+                color: {self.colors['text_primary']};
             }}
         """)
-        loc_layout = QVBoxLayout(loc_group)
+        
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        
+        # Header Area
+        header_frame = QFrame()
+        header_frame.setStyleSheet(f"background-color: {self.colors['card_bg']}; border-bottom: 1px solid {self.colors['border_light']};")
+        header_layout = QVBoxLayout(header_frame)
+        header_layout.setContentsMargins(30, 25, 30, 25)
+        
+        title = QLabel("Settings & Maintenance")
+        title.setFont(QFont("SF Pro Display", 22, QFont.Bold))
+        header_layout.addWidget(title)
+        
+        subtitle = QLabel("Configure your experience and keep the liberation engine updated.")
+        subtitle.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 13px;")
+        header_layout.addWidget(subtitle)
+        
+        main_layout.addWidget(header_frame)
+        
+        # Scrollable Content Area
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.NoFrame)
+        scroll.setStyleSheet("background: transparent;")
+        
+        container = QWidget()
+        container_layout = QVBoxLayout(container)
+        container_layout.setContentsMargins(30, 20, 30, 20)
+        container_layout.setSpacing(25)
+        
+        # Section 1: Storage Card
+        storage_card = self._create_card("📂 Storage & Path")
+        storage_layout = QVBoxLayout(storage_card)
+        storage_layout.setContentsMargins(20, 45, 20, 20)
+        
+        path_header = QLabel("Download Destination")
+        path_header.setFont(QFont("SF Pro Display", 14, QFont.Medium))
+        storage_layout.addWidget(path_header)
         
         self.path_label = QLabel(self.settings_manager.get_download_path())
         self.path_label.setWordWrap(True)
-        self.path_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-size: 13px;")
-        loc_layout.addWidget(self.path_label)
+        self.path_label.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 12px; margin-top: 5px;")
+        storage_layout.addWidget(self.path_label)
         
-        self.change_loc_btn = QPushButton("Change Folder")
-        self.change_loc_btn.setStyleSheet(f"""
-            QPushButton {{
-                background-color: {self.colors['glass_bg']};
-                color: {self.colors['text_primary']};
-                border: 1px solid {self.colors['glass_border']};
-                padding: 8px 15px;
+        self.change_loc_btn = QPushButton("📂 Change Destination Folder")
+        self.change_loc_btn.setStyleSheet(self._get_secondary_btn_style())
+        self.change_loc_btn.clicked.connect(self._on_change_loc)
+        storage_layout.addWidget(self.change_loc_btn)
+        
+        container_layout.addWidget(storage_card)
+        
+        # Section 2: Engine & App Card
+        maintenance_card = self._create_card("🚀 System & Engine Updates")
+        maint_layout = QVBoxLayout(maintenance_card)
+        maint_layout.setContentsMargins(20, 45, 20, 20)
+        maint_layout.setSpacing(15)
+        
+        # yt-dlp section
+        yt_header = QLabel("Downloader Engine (yt-dlp)")
+        yt_header.setFont(QFont("SF Pro Display", 14, QFont.Medium))
+        maint_layout.addWidget(yt_header)
+        
+        self.update_btn = QPushButton("🔄 Refresh Engine Core")
+        self.update_btn.setStyleSheet(self._get_primary_btn_style())
+        self.update_btn.clicked.connect(self._on_update_engine)
+        maint_layout.addWidget(self.update_btn)
+        
+        # App section
+        app_header = QLabel(f"Application Software (v{APP_VERSION})")
+        app_header.setFont(QFont("SF Pro Display", 14, QFont.Medium))
+        maint_layout.addWidget(app_header)
+        
+        self.app_update_btn = QPushButton("✨ Check for App Updates (OTA)")
+        self.app_update_btn.setStyleSheet(self._get_primary_btn_style())
+        self.app_update_btn.clicked.connect(self._on_update_app)
+        maint_layout.addWidget(self.app_update_btn)
+        
+        container_layout.addWidget(maintenance_card)
+        
+        # Section 3: Log Console (Scrollable)
+        self.log_area_group = self._create_card("📟 Terminal Output")
+        log_inner_layout = QVBoxLayout(self.log_area_group)
+        log_inner_layout.setContentsMargins(15, 45, 15, 15)
+        
+        self.log_scroll = QScrollArea()
+        self.log_scroll.setWidgetResizable(True)
+        self.log_scroll.setFixedHeight(120)
+        self.log_scroll.setStyleSheet(f"""
+            QScrollArea {{
+                background-color: #000000;
+                border: 1px solid {self.colors['border']};
                 border-radius: 8px;
             }}
-            QPushButton:hover {{
-                background-color: {self.colors['glass_hover']};
+        """)
+        
+        self.log_text = QLabel("System idle. Monitoring for commands...")
+        self.log_text.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.log_text.setWordWrap(True)
+        self.log_text.setStyleSheet("""
+            color: #00FF41; 
+            font-family: 'Courier New', monospace; 
+            font-size: 11px; 
+            padding: 10px;
+            background-color: #000000;
+        """)
+        self.log_scroll.setWidget(self.log_text)
+        log_inner_layout.addWidget(self.log_scroll)
+        
+        # Initially hide the console part
+        self.log_area_group.hide()
+        container_layout.addWidget(self.log_area_group)
+        
+        container_layout.addStretch()
+        scroll.setWidget(container)
+        main_layout.addWidget(scroll)
+        
+        # Footer
+        footer_frame = QFrame()
+        footer_frame.setStyleSheet(f"background-color: {self.colors['card_bg']}; border-top: 1px solid {self.colors['border_light']};")
+        footer_layout = QHBoxLayout(footer_frame)
+        footer_layout.setContentsMargins(30, 20, 30, 20)
+        
+        footer_info = QLabel("SMdown v" + APP_VERSION)
+        footer_info.setStyleSheet(f"color: {self.colors['text_tertiary']}; font-size: 11px;")
+        footer_layout.addWidget(footer_info)
+        
+        footer_layout.addStretch()
+        
+        self.close_btn = QPushButton("Done")
+        self.close_btn.setFixedWidth(100)
+        self.close_btn.setStyleSheet(self._get_secondary_btn_style())
+        self.close_btn.clicked.connect(self.accept)
+        footer_layout.addWidget(self.close_btn)
+        
+        main_layout.addWidget(footer_frame)
+
+    def _create_card(self, title_text: str) -> QFrame:
+        card = QFrame()
+        card.setStyleSheet(f"""
+            QFrame {{
+                background-color: {self.colors['card_bg']};
+                border: 1px solid {self.colors['border_light']};
+                border-radius: 15px;
             }}
         """)
-        self.change_loc_btn.clicked.connect(self._on_change_loc)
-        loc_layout.addWidget(self.change_loc_btn)
         
-        layout.addWidget(loc_group)
-        
-        # Section 2: Engine Status
-        engine_group = QGroupBox("Core Engine (yt-dlp)")
-        engine_group.setStyleSheet(loc_group.styleSheet())
-        engine_layout = QVBoxLayout(engine_group)
-        
-        status_label = QLabel("Maintenance & Anti-Correction")
-        status_label.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 12px;")
-        engine_layout.addWidget(status_label)
-        
-        self.update_btn = QPushButton("🚀 Check for Engine Updates")
-        self.update_btn.setStyleSheet(f"""
+        # Add internal title label
+        title = QLabel(title_text, card)
+        title.setFont(QFont("SF Pro Display", 11, QFont.Bold))
+        title.setStyleSheet(f"""
+            color: {self.colors['text_tertiary']};
+            background: transparent;
+            border: none;
+        """)
+        title.move(20, 15)
+        return card
+
+    def _get_primary_btn_style(self):
+        return f"""
             QPushButton {{
                 background-color: {self.colors['primary']};
                 color: white;
                 border: none;
-                padding: 10px 15px;
-                border-radius: 8px;
+                padding: 12px;
+                border-radius: 10px;
+                font-size: 13px;
                 font-weight: 600;
             }}
             QPushButton:hover {{
@@ -326,54 +430,24 @@ class SettingsDialog(QDialog):
             }}
             QPushButton:disabled {{
                 background-color: {self.colors['border']};
+                color: {self.colors['text_tertiary']};
             }}
-        """)
-        self.update_btn.clicked.connect(self._on_update_engine)
-        engine_layout.addWidget(self.update_btn)
-        
-        # Output Log (Hidden by default)
-        self.log_area = QScrollArea()
-        self.log_area.setWidgetResizable(True)
-        self.log_area.setFixedHeight(100)
-        self.log_area.hide()
-        self.log_text = QLabel("Initializing monitor...")
-        self.log_text.setAlignment(Qt.AlignTop | Qt.AlignLeft)
-        self.log_text.setStyleSheet(f"color: {self.colors['text_secondary']}; font-family: 'Courier'; font-size: 11px; padding: 5px;")
-        self.log_area.setWidget(self.log_text)
-        engine_layout.addWidget(self.log_area)
-        
-        layout.addWidget(engine_group)
-        
-        # Section 3: App Status & Update
-        app_group = QGroupBox(f"App Version v{APP_VERSION}")
-        app_group.setStyleSheet(loc_group.styleSheet())
-        app_layout = QVBoxLayout(app_group)
-        
-        self.app_update_btn = QPushButton("✨ Check for App Updates (OTA)")
-        self.app_update_btn.setStyleSheet(self.update_btn.styleSheet())
-        self.app_update_btn.clicked.connect(self._on_update_app)
-        app_layout.addWidget(self.app_update_btn)
-        
-        layout.addWidget(app_group)
-        
-        layout.addStretch()
-        
-        # Bottom Buttons
-        btn_box = QDialogButtonBox(QDialogButtonBox.Ok)
-        btn_box.accepted.connect(self.accept)
-        btn_box.setStyleSheet(f"""
+        """
+
+    def _get_secondary_btn_style(self):
+        return f"""
             QPushButton {{
                 background-color: {self.colors['glass_bg']};
                 color: {self.colors['text_primary']};
                 border: 1px solid {self.colors['glass_border']};
-                padding: 8px 20px;
-                border-radius: 8px;
+                padding: 10px;
+                border-radius: 10px;
+                font-size: 13px;
             }}
             QPushButton:hover {{
                 background-color: {self.colors['glass_hover']};
             }}
-        """)
-        layout.addWidget(btn_box)
+        """
 
     def _on_change_loc(self):
         current = self.settings_manager.get_download_path()
@@ -385,7 +459,7 @@ class SettingsDialog(QDialog):
     def _on_update_engine(self):
         self.update_btn.setEnabled(False)
         self.update_btn.setText("Updating... Please wait")
-        self.log_area.show()
+        self.log_area_group.show()
         self.log_text.setText("Starting protocol: pip install -U yt-dlp\n")
         
         self._update_thread = EngineUpdateThread()
@@ -397,15 +471,20 @@ class SettingsDialog(QDialog):
 
     def _append_log(self, text):
         current = self.log_text.text()
-        # Keep only last 5 lines for display
+        # Keep only last 20 lines for display
         lines = current.split('\n')
         if len(lines) > 20:
             lines = lines[-20:]
         self.log_text.setText('\n'.join(lines) + '\n' + text.strip())
+        
+        # Auto-scroll to bottom
+        self.log_scroll.verticalScrollBar().setValue(
+            self.log_scroll.verticalScrollBar().maximum()
+        )
 
     def _on_update_finished(self, success, full_output):
         self.update_btn.setEnabled(True)
-        self.update_btn.setText("🚀 Check for Engine Updates")
+        self.update_btn.setText("🔄 Refresh Engine Core")
         
         if success:
             QMessageBox.information(self, "Update Success", "yt-dlp engine has been updated successfully!")
@@ -417,7 +496,7 @@ class SettingsDialog(QDialog):
     def _on_update_app(self):
         self.app_update_btn.setEnabled(False)
         self.app_update_btn.setText("Updating SMdown...")
-        self.log_area.show()
+        self.log_area_group.show()
         self.log_text.setText("Initiating OTA Protocol: git stack update\n")
         
         self._app_thread = AppUpdateThread()

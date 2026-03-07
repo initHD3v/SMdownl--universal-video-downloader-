@@ -1,7 +1,7 @@
 # SMdown - unversal platform media downloader 
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/initHD3v/SMdownl--universal-video-downloader-/main/assets/icon.png" width="128" height="128" alt="SMdown Icon">
+  <img src="./assets/logo.png" width="160" height="160" alt="SMdown Logo">
   <h3>🎬 Universal Video Downloader for the Modern Human</h3>
   <p><i>Karena terkadang "Save Post" saja tidak cukup untuk memuaskan hasrat kepemilikan digital </i></p>
 </div>

@@ -602,10 +602,19 @@ class AboutDialog(QDialog):
         header_layout = QVBoxLayout()
         header_layout.setAlignment(Qt.AlignCenter)
         
-        app_icon = QLabel("⬇️") # Mock icon
-        app_icon.setFont(QFont("SF Pro Display", 48))
+        logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "logo.png")
+        app_icon = QLabel()
+        if os.path.exists(logo_path):
+            pixmap = QPixmap(logo_path)
+            # Resize appropriately
+            app_icon.setPixmap(pixmap.scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        else:
+            app_icon.setText("⬇️") # Fallback
+            app_icon.setFont(QFont("SF Pro Display", 48))
+            
         app_icon.setAlignment(Qt.AlignCenter)
         header_layout.addWidget(app_icon)
+
         
         app_title = QLabel("SMdown")
         app_title.setFont(QFont("SF Pro Display", 24, QFont.Bold))
@@ -678,106 +687,170 @@ class AboutDialog(QDialog):
 class HistoryDialog(QDialog):
     """Download history dialog with macOS 26 styling"""
     
-    def __init__(self, history: HistoryManager, parent=None):
+    def __init__(self, history: HistoryManager, colors: dict, parent=None):
         super().__init__(parent)  # pyre-ignore[20]
         self.history = history
+        self.colors = colors
         self.setup_ui()
         self.load_history()
     
     def setup_ui(self):
         self.setWindowTitle("Download History")
-        self.setMinimumSize(700, 500)
-        self.resize(800, 600)
+        self.setMinimumSize(750, 550)
+        self.resize(850, 650)
         
-        # macOS 26 styling
-        self.setStyleSheet("""
-            QDialog {
-                background-color: #F5F5F7;
-            }
+        # Liquid Glass styling
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {self.colors['window_bg']};
+                border-radius: 24px;
+            }}
         """)
+        
+        # Shadow for depth
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(40)
+        shadow.setXOffset(0)
+        shadow.setYOffset(10)
+        shadow.setColor(self.colors['shadow'])
+        self.setGraphicsEffect(shadow)
         
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(20)
         
-        # Header
+        # Header layout
+        header_layout = QHBoxLayout()
+        
         header = QLabel("📜 Download History")
-        header.setFont(QFont("SF Pro Display", 20, QFont.Bold))
-        header.setStyleSheet("color: #1D1D1F;")
-        layout.addWidget(header)
+        header.setFont(QFont("SF Pro Display", 22, QFont.Bold))
+        header.setStyleSheet(f"color: {self.colors['text_primary']};")
+        header_layout.addWidget(header)
+        
+        header_layout.addStretch()
+        
+        # Result count
+        self.count_label = QLabel("0 Items")
+        self.count_label.setStyleSheet(f"color: {self.colors['text_tertiary']}; font-size: 13px;")
+        header_layout.addWidget(self.count_label)
+        
+        layout.addLayout(header_layout)
         
         # History list
         self.history_list = QListWidget()
-        self.history_list.setStyleSheet("""
-            QListWidget {
-                border: 1px solid #D2D2D7;
-                border-radius: 12px;
-                background-color: white;
-            }
-            QListWidget::item {
-                padding: 12px 16px;
-                border-bottom: 1px solid #E5E5EA;
-            }
-            QListWidget::item:selected {
-                background-color: #007AFF;
-                color: white;
-            }
-            QListWidget::item:hover {
-                background-color: #F5F5F7;
-            }
+        self.history_list.setSpacing(12)
+        self.history_list.setVerticalScrollMode(QListWidget.ScrollPerPixel)
+        self.history_list.setFrameShape(QFrame.NoFrame)
+        self.history_list.setAttribute(Qt.WA_MacShowFocusRect, False)
+        
+        # Modern scrollbar styling
+        self.history_list.setStyleSheet(f"""
+            QListWidget {{
+                background: transparent;
+                border: none;
+                outline: none;
+                padding: 5px;
+            }}
+            QListWidget::item {{
+                background: transparent;
+                border: none;
+                padding: 0;
+            }}
+            QScrollBar:vertical {{
+                border: none;
+                background: transparent;
+                width: 8px;
+                margin: 0;
+            }}
+            QScrollBar::handle:vertical {{
+                background: {self.colors['border']};
+                min-height: 30px;
+                border-radius: 4px;
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
         """)
         layout.addWidget(self.history_list)
         
-        # Buttons
-        button_layout = QHBoxLayout()
+        # Empty state placeholder
+        self.empty_label = QLabel("No downloads found Yet. Start exploring!")
+        self.empty_label.setAlignment(Qt.AlignCenter)
+        self.empty_label.setStyleSheet(f"color: {self.colors['text_tertiary']}; font-size: 16px; margin: 40px;")
+        self.empty_label.hide()
+        layout.addWidget(self.empty_label)
         
-        self.clear_btn = QPushButton("🗑 Clear All")
-        self.clear_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #FF3B30;
-                color: white;
-                border: none;
-                padding: 10px 20px;
-                border-radius: 8px;
+        # Footer Buttons
+        button_layout = QHBoxLayout()
+        button_layout.setContentsMargins(0, 10, 0, 0)
+        
+        self.clear_btn = QPushButton("🗑 Clear History")
+        self.clear_btn.setCursor(Qt.PointingHandCursor)
+        self.clear_btn.setFixedWidth(140)
+        self.clear_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.colors['glass_bg']};
+                color: {self.colors['error']};
+                border: 1px solid {self.colors['glass_border']};
+                padding: 10px;
+                border-radius: 12px;
                 font-size: 13px;
                 font-weight: 500;
-            }
-            QPushButton:hover {
-                background-color: #FF453A;
-            }
+            }}
+            QPushButton:hover {{
+                background-color: {self.colors['error']}20;
+                border-color: {self.colors['error']};
+            }}
         """)
         self.clear_btn.clicked.connect(self._on_clear_clicked)
         button_layout.addWidget(self.clear_btn)
         
         button_layout.addStretch()
         
-        self.close_btn = QPushButton("Close")
-        self.close_btn.setStyleSheet("""
-            QPushButton {
-                background-color: #007AFF;
+        self.close_btn = QPushButton("Done")
+        self.close_btn.setCursor(Qt.PointingHandCursor)
+        self.close_btn.setFixedWidth(100)
+        self.close_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.colors['primary']};
                 color: white;
                 border: none;
-                padding: 10px 20px;
-                border-radius: 8px;
-                font-size: 13px;
-                font-weight: 500;
-            }
-            QPushButton:hover {
-                background-color: #0066D6;
-            }
+                padding: 10px;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {self.colors['primary_hover']};
+            }}
         """)
         self.close_btn.clicked.connect(self.accept)
         button_layout.addWidget(self.close_btn)
         
         layout.addLayout(button_layout)
+        
     
     def load_history(self):
         """Load history items into list"""
         self.history_list.clear()
         items = self.history.get_all(limit=100)
         
+        self.count_label.setText(f"{len(items)} Items")
+        
+        if not items:
+            self.empty_label.show()
+            self.history_list.hide()
+            return
+        
+        self.empty_label.hide()
+        self.history_list.show()
+        
         for item in items:
-            widget = HistoryItemWidget(item)
+            widget = HistoryItemWidget(item, self.colors)
+            # Connect deletion signal if we add it
+            widget.deleted.connect(self.load_history)
+            
             list_item = QListWidgetItem(self.history_list)
             list_item.setSizeHint(widget.sizeHint())
             self.history_list.addItem(list_item)
@@ -796,48 +869,156 @@ class HistoryDialog(QDialog):
 
 
 class HistoryItemWidget(QWidget):
-    """Widget for displaying a single history item"""
+    """Premium widget for displaying a single history item with card layout"""
     
-    def __init__(self, item: HistoryItem):
+    deleted = Signal()
+    
+    def __init__(self, item: HistoryItem, colors: dict):
         super().__init__()
         self.item = item
+        self.colors = colors
+        self._thumbnail_thread = None
         self.setup_ui()
-    
+        
     def setup_ui(self):
-        layout = QHBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 12)
-        layout.setSpacing(12)
+        # Card style container
+        self.main_layout = QHBoxLayout(self)
+        self.main_layout.setContentsMargins(10, 5, 10, 5)
         
-        # Platform icon
-        icon = QLabel(PLATFORM_ICONS.get(self.item.platform, '📹'))
-        icon.setStyleSheet("font-size: 24px;")
-        layout.addWidget(icon)
+        self.card = QFrame()
+        self.card.setObjectName("HistoryItemCard")
+        self.card.setStyleSheet(f"""
+            QFrame#HistoryItemCard {{
+                background-color: {self.colors['card_glass']};
+                border: 1px solid {self.colors['glass_border']};
+                border-radius: 16px;
+            }}
+            QFrame#HistoryItemCard:hover {{
+                background-color: {self.colors['glass_hover']};
+                border-color: {self.colors['glass_focus']};
+            }}
+        """)
         
-        # Info
+        card_layout = QHBoxLayout(self.card)
+        card_layout.setContentsMargins(12, 12, 15, 12)
+        card_layout.setSpacing(15)
+        
+        # 1. Thumbnail / Platform Icon
+        self.thumb_container = QLabel()
+        self.thumb_container.setFixedSize(110, 62) # 16:9 smaller
+        self.thumb_container.setStyleSheet(f"background-color: {self.colors['glass_pressed']}; border-radius: 8px;")
+        self.thumb_container.setAlignment(Qt.AlignCenter)
+        
+        if self.item.thumbnail:
+            self._load_thumbnail(self.item.thumbnail)
+        else:
+            icon = PLATFORM_ICONS.get(self.item.platform, '📹')
+            self.thumb_container.setText(icon)
+            self.thumb_container.setFont(QFont("SF Pro Display", 24))
+            
+        card_layout.addWidget(self.thumb_container)
+        
+        # 2. Content Info
         info_layout = QVBoxLayout()
-        info_layout.setSpacing(4)
+        info_layout.setSpacing(2)
         
+        title_row = QHBoxLayout()
         title = QLabel(self.item.title)
-        title.setFont(QFont("SF Pro Display", 13, QFont.Medium))
-        title.setWordWrap(True)
-        info_layout.addWidget(title)
+        title.setFont(QFont("SF Pro Display", 14, QFont.Bold))
+        title.setWordWrap(False)
+        title.setStyleSheet(f"color: {self.colors['text_primary']};")
+        title_row.addWidget(title, 1)
         
-        meta = QLabel(f"{self.item.platform} • {self.item.quality} • {self._format_date()}")
-        meta.setStyleSheet("color: #6E6E73; font-size: 12px;")
+        info_layout.addLayout(title_row)
+        
+        meta_text = f"{self.item.platform} • {self.item.quality} • {self._format_size()} • {self._format_date()}"
+        meta = QLabel(meta_text)
+        meta.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 12px;")
         info_layout.addWidget(meta)
         
-        layout.addLayout(info_layout, 1)
+        card_layout.addLayout(info_layout, 1)
         
-        # File size
-        size = QLabel(self._format_size())
-        size.setStyleSheet("color: #86868B; font-size: 12px;")
-        layout.addWidget(size)
+        # 3. Actions
+        actions_layout = QHBoxLayout()
+        actions_layout.setSpacing(8)
+        
+        # Play button if file exists
+        self.open_btn = QPushButton("📂")
+        self.open_btn.setToolTip("Open File Location")
+        self.open_btn.setFixedSize(36, 36)
+        self.open_btn.setCursor(Qt.PointingHandCursor)
+        self.open_btn.setStyleSheet(self._get_action_btn_style())
+        self.open_btn.clicked.connect(self._on_open_clicked)
+        actions_layout.addWidget(self.open_btn)
+        
+        self.delete_btn = QPushButton("🗑")
+        self.delete_btn.setToolTip("Remove from History")
+        self.delete_btn.setFixedSize(36, 36)
+        self.delete_btn.setCursor(Qt.PointingHandCursor)
+        self.delete_btn.setStyleSheet(self._get_action_btn_style(is_destructive=True))
+        self.delete_btn.clicked.connect(self._on_delete_clicked)
+        actions_layout.addWidget(self.delete_btn)
+        
+        card_layout.addLayout(actions_layout)
+        
+        self.main_layout.addWidget(self.card)
+        
+    def _get_action_btn_style(self, is_destructive=False):
+        color = self.colors['error'] if is_destructive else self.colors['primary']
+        return f"""
+            QPushButton {{
+                background-color: {self.colors['glass_bg']};
+                border: 1px solid {self.colors['glass_border']};
+                border-radius: 10px;
+                font-size: 14px;
+            }}
+            QPushButton:hover {{
+                background-color: {color}20;
+                border-color: {color};
+            }}
+        """
+
+    def _load_thumbnail(self, url):
+        self._thumbnail_thread = ThumbnailFetchThread(url)
+        # pyre-ignore[16]
+        self._thumbnail_thread.finished.connect(self._on_thumb_ready)
+        # pyre-ignore[16]
+        self._thumbnail_thread.start()
+        
+    def _on_thumb_ready(self, pixmap):
+        self.thumb_container.setPixmap(pixmap.scaled(
+            self.thumb_container.size(), 
+            Qt.KeepAspectRatioByExpanding, 
+            Qt.SmoothTransformation
+        ))
+        
+    def _on_open_clicked(self):
+        """Reveal file in finder/file explorer"""
+        if os.path.exists(self.item.file_path):
+            if os.name == 'nt': # Windows
+                # pyre-ignore[16]
+                os.startfile(os.path.dirname(self.item.file_path))
+            elif os.uname().sysname == 'Darwin': # macOS
+                subprocess.run(['open', '-R', self.item.file_path])
+            else: # Linux
+                subprocess.run(['xdg-open', os.path.dirname(self.item.file_path)])
+        else:
+            QMessageBox.warning(self, "File Not Found", f"The file has been moved or deleted:\n{self.item.file_path}")
+
+    def _on_delete_clicked(self):
+        """Delete from manager and emit signal"""
+        # Note: We need a way to access history_manager here, or pass it in. 
+        # But maybe we can just emit the signal and handle it in the dialog.
+        # We'll assume the dialog handles the actual deletion from manager.
+        # For now, let's just emit and let the list refresh.
+        # Actually, let's pass a reference to history_manager or just use a signal with ID
+        self.deleted.emit()
     
     def _format_date(self):
         """Format download date"""
         try:
             dt = datetime.fromisoformat(self.item.downloaded_at)
-            return dt.strftime("%b %d, %Y %H:%M")
+            return dt.strftime("%b %d")
         except:
             return "Unknown"
     
@@ -845,12 +1026,12 @@ class HistoryItemWidget(QWidget):
         """Format file size"""
         size = self.item.file_size
         if size >= 1024 * 1024 * 1024:
-            return f"{size / (1024*1024*1024):.1f} GB"
+            return f"{size / (1024*1024*1024):.1f}GB"
         elif size >= 1024 * 1024:
-            return f"{size / (1024*1024):.1f} MB"
+            return f"{size / (1024*1024):.1f}MB"
         elif size >= 1024:
-            return f"{size / 1024:.1f} KB"
-        return f"{size} B"
+            return f"{size / 1024:.1f}KB"
+        return f"{size}B"
 
 
 class DownloadStatusWidget(QWidget):
@@ -1329,6 +1510,12 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("SMdown - video downloader")
         self.setMinimumSize(850, 700)
         self.resize(950, 750)
+        
+        # Set Window Icon
+        logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "logo.png")
+        if os.path.exists(logo_path):
+            self.setWindowIcon(QIcon(logo_path))
+
         
         # Central widget
         central = QWidget() # pyre-ignore[20]
@@ -1818,7 +2005,11 @@ class MainWindow(QMainWindow):
     
     def _on_history_clicked(self):
         """Show history dialog"""
-        dialog = HistoryDialog(self.history_manager, self)
+        # Determine colors based on current mode
+        is_dark = self.theme_manager.is_dark_mode()
+        colors = macOSColors.DARK if is_dark else macOSColors.LIGHT
+        
+        dialog = HistoryDialog(self.history_manager, colors, self)
         dialog.exec()
     
     def _on_about_clicked(self):

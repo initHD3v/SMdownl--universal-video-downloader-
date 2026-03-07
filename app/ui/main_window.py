@@ -225,12 +225,65 @@ class AppUpdateThread(QThread):
             self.finished.emit(False, str(e), False)
 
 
+class SettingsCard(QFrame):
+    """Premium card component for settings sections"""
+    
+    def __init__(self, title_text: str, colors: dict, parent=None):
+        QFrame.__init__(self, parent)
+        self.colors = colors
+
+        self.setup_ui(title_text)
+        
+    def setup_ui(self, title_text):
+        self.setObjectName("SettingsCard")
+        self.setStyleSheet(f"""
+            QFrame#SettingsCard {{
+                background-color: {self.colors['card_glass']};
+                border: 1px solid {self.colors['glass_border']};
+                border-radius: 18px;
+            }}
+        """)
+        
+        # Add a subtle shadow
+        shadow = QGraphicsDropShadowEffect(self)
+        shadow.setBlurRadius(15)
+        shadow.setXOffset(0)
+        shadow.setYOffset(4)
+        shadow.setColor(self.colors['shadow'])
+        self.setGraphicsEffect(shadow)
+        
+        self.main_layout = QVBoxLayout(self)
+        self.main_layout.setContentsMargins(20, 20, 20, 20)
+        self.main_layout.setSpacing(15)
+        
+        # Header layout for Title
+        header_layout = QHBoxLayout()
+        header_layout.setContentsMargins(0, 0, 0, 5)
+        
+        self.title_label = QLabel(title_text)
+        self.title_label.setFont(QFont("SF Pro Display", 14, QFont.Bold))
+        self.title_label.setStyleSheet(f"color: {self.colors['text_primary']}; border: none; background: transparent;")
+        header_layout.addWidget(self.title_label)
+        header_layout.addStretch()
+        
+        self.main_layout.addLayout(header_layout)
+
+    def add_widget(self, widget: QWidget):
+        self.main_layout.addWidget(widget)
+
+    def add_layout(self, layout: QVBoxLayout):
+        self.main_layout.addLayout(layout)
+
+
 class SettingsDialog(QDialog):
+
     """Professional settings dialog with engine update capabilities"""
     
     def __init__(self, settings_manager: SettingsManager, colors: dict, parent=None):
         QDialog.__init__(self, parent)
         self.settings_manager = settings_manager
+
+
         self.colors = colors
         self._update_thread = None
         self.setup_ui()
@@ -260,14 +313,21 @@ class SettingsDialog(QDialog):
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
         
-        # Header Area
+        # Header Area with Liquid Glass
         header_frame = QFrame()
-        header_frame.setStyleSheet(f"background-color: {self.colors['card_bg']}; border-bottom: 1px solid {self.colors['border_light']};")
+        header_frame.setObjectName("HeaderFrame")
+        header_frame.setStyleSheet(f"""
+            QFrame#HeaderFrame {{
+                background-color: {self.colors['card_glass']};
+                border-bottom: 1px solid {self.colors['glass_border']};
+            }}
+        """)
         header_layout = QVBoxLayout(header_frame)
         header_layout.setContentsMargins(30, 25, 30, 25)
         
         title = QLabel("Settings & Maintenance")
-        title.setFont(QFont("SF Pro Display", 22, QFont.Bold))
+        title.setFont(QFont("SF Pro Display", 24, QFont.Bold))
+        title.setStyleSheet(f"color: {self.colors['text_primary']};")
         header_layout.addWidget(title)
         
         subtitle = QLabel("Configure your experience and keep the liberation engine updated.")
@@ -275,6 +335,7 @@ class SettingsDialog(QDialog):
         header_layout.addWidget(subtitle)
         
         main_layout.addWidget(header_frame)
+
         
         # Scrollable Content Area
         scroll = QScrollArea()
@@ -288,58 +349,54 @@ class SettingsDialog(QDialog):
         container_layout.setSpacing(25)
         
         # Section 1: Storage Card
-        storage_card = self._create_card("📂 Storage & Path")
-        storage_layout = QVBoxLayout(storage_card)
-        storage_layout.setContentsMargins(20, 45, 20, 20)
+        self.storage_card = SettingsCard("📂 Storage & Path", self.colors)
         
         path_header = QLabel("Download Destination")
-        path_header.setFont(QFont("SF Pro Display", 14, QFont.Medium))
-        storage_layout.addWidget(path_header)
+        path_header.setFont(QFont("SF Pro Display", 13, QFont.Medium))
+        path_header.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        self.storage_card.add_widget(path_header)
         
         self.path_label = QLabel(self.settings_manager.get_download_path())
         self.path_label.setWordWrap(True)
-        self.path_label.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 12px; margin-top: 5px;")
-        storage_layout.addWidget(self.path_label)
+        self.path_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-size: 13px; margin: 5px 0 10px 0;")
+        self.storage_card.add_widget(self.path_label)
         
         self.change_loc_btn = QPushButton("📂 Change Destination Folder")
         self.change_loc_btn.setStyleSheet(self._get_secondary_btn_style())
         self.change_loc_btn.clicked.connect(self._on_change_loc)
-        storage_layout.addWidget(self.change_loc_btn)
+        self.storage_card.add_widget(self.change_loc_btn)
         
-        container_layout.addWidget(storage_card)
+        container_layout.addWidget(self.storage_card)
         
         # Section 2: Engine & App Card
-        maintenance_card = self._create_card("🚀 System & Engine Updates")
-        maint_layout = QVBoxLayout(maintenance_card)
-        maint_layout.setContentsMargins(20, 45, 20, 20)
-        maint_layout.setSpacing(15)
+        self.maintenance_card = SettingsCard("🚀 System & Engine Updates", self.colors)
         
         # yt-dlp section
         yt_header = QLabel("Downloader Engine (yt-dlp)")
-        yt_header.setFont(QFont("SF Pro Display", 14, QFont.Medium))
-        maint_layout.addWidget(yt_header)
+        yt_header.setFont(QFont("SF Pro Display", 13, QFont.Medium))
+        yt_header.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        self.maintenance_card.add_widget(yt_header)
         
         self.update_btn = QPushButton("🔄 Refresh Engine Core")
         self.update_btn.setStyleSheet(self._get_primary_btn_style())
         self.update_btn.clicked.connect(self._on_update_engine)
-        maint_layout.addWidget(self.update_btn)
+        self.maintenance_card.add_widget(self.update_btn)
         
         # App section
         app_header = QLabel(f"Application Software (v{APP_VERSION})")
-        app_header.setFont(QFont("SF Pro Display", 14, QFont.Medium))
-        maint_layout.addWidget(app_header)
+        app_header.setFont(QFont("SF Pro Display", 13, QFont.Medium))
+        app_header.setStyleSheet(f"color: {self.colors['text_secondary']};")
+        self.maintenance_card.add_widget(app_header)
         
         self.app_update_btn = QPushButton("✨ Check for App Updates (OTA)")
         self.app_update_btn.setStyleSheet(self._get_primary_btn_style())
         self.app_update_btn.clicked.connect(self._on_update_app)
-        maint_layout.addWidget(self.app_update_btn)
+        self.maintenance_card.add_widget(self.app_update_btn)
         
-        container_layout.addWidget(maintenance_card)
+        container_layout.addWidget(self.maintenance_card)
         
         # Section 3: Log Console (Scrollable)
-        self.log_area_group = self._create_card("📟 Terminal Output")
-        log_inner_layout = QVBoxLayout(self.log_area_group)
-        log_inner_layout.setContentsMargins(15, 45, 15, 15)
+        self.log_area_group = SettingsCard("📟 Terminal Output", self.colors)
         
         self.log_scroll = QScrollArea()
         self.log_scroll.setWidgetResizable(True)
@@ -348,7 +405,7 @@ class SettingsDialog(QDialog):
             QScrollArea {{
                 background-color: #000000;
                 border: 1px solid {self.colors['border']};
-                border-radius: 8px;
+                border-radius: 12px;
             }}
         """)
         
@@ -363,19 +420,27 @@ class SettingsDialog(QDialog):
             background-color: #000000;
         """)
         self.log_scroll.setWidget(self.log_text)
-        log_inner_layout.addWidget(self.log_scroll)
+        self.log_area_group.add_widget(self.log_scroll)
         
         # Initially hide the console part
         self.log_area_group.hide()
         container_layout.addWidget(self.log_area_group)
+
         
         container_layout.addStretch()
+
         scroll.setWidget(container)
         main_layout.addWidget(scroll)
         
-        # Footer
+        # Footer Area
         footer_frame = QFrame()
-        footer_frame.setStyleSheet(f"background-color: {self.colors['card_bg']}; border-top: 1px solid {self.colors['border_light']};")
+        footer_frame.setObjectName("FooterFrame")
+        footer_frame.setStyleSheet(f"""
+            QFrame#FooterFrame {{
+                background-color: {self.colors['card_glass']};
+                border-top: 1px solid {self.colors['glass_border']};
+            }}
+        """)
         footer_layout = QHBoxLayout(footer_frame)
         footer_layout.setContentsMargins(30, 20, 30, 20)
         
@@ -393,26 +458,8 @@ class SettingsDialog(QDialog):
         
         main_layout.addWidget(footer_frame)
 
-    def _create_card(self, title_text: str) -> QFrame:
-        card = QFrame()
-        card.setStyleSheet(f"""
-            QFrame {{
-                background-color: {self.colors['card_bg']};
-                border: 1px solid {self.colors['border_light']};
-                border-radius: 15px;
-            }}
-        """)
-        
-        # Add internal title label
-        title = QLabel(title_text, card)
-        title.setFont(QFont("SF Pro Display", 11, QFont.Bold))
-        title.setStyleSheet(f"""
-            color: {self.colors['text_tertiary']};
-            background: transparent;
-            border: none;
-        """)
-        title.move(20, 15)
-        return card
+
+
 
     def _get_primary_btn_style(self):
         return f"""

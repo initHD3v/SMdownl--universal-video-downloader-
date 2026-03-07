@@ -149,11 +149,222 @@ class MetadataFetcherThread(QThread):
             self.error.emit("Failed to fetch video metadata")
 
 
+class EngineUpdateThread(QThread):
+    """Background thread to update yt-dlp engine"""
+    output = Signal(str)
+    finished = Signal(bool, str)
+    
+    def run(self):
+        try:
+            # Run pip upgrade command
+            process = subprocess.Popen(
+                ["python3", "-m", "pip", "install", "-U", "yt-dlp"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+                universal_newlines=True
+            )
+            
+            full_output = ""
+            stdout = process.stdout
+            if stdout is not None:
+                for line in stdout:
+                    self.output.emit(str(line))
+                    full_output += str(line)
+            
+            process.wait()
+            success = process.returncode == 0
+            self.finished.emit(success, full_output)
+            
+        except Exception as e:
+            logger.error("Engine update failed: %s", e)
+            self.finished.emit(False, str(e))
+
+
+class SettingsDialog(QDialog):
+    """Professional settings dialog with engine update capabilities"""
+    
+    def __init__(self, settings_manager: SettingsManager, colors: dict, parent=None):
+        QDialog.__init__(self, parent)
+        self.settings_manager = settings_manager
+        self.colors = colors
+        self._update_thread = None
+        self.setup_ui()
+    
+    def setup_ui(self):
+        self.setWindowTitle("Settings & Engine Control")
+        self.setFixedSize(500, 450)
+        
+        # Center dialog
+        if self.parent():
+            parent_geo = self.parent().geometry()
+            self.move(
+                parent_geo.center().x() - self.width() // 2,
+                parent_geo.center().y() - self.height() // 2
+            )
+            
+        self.setStyleSheet(f"background-color: {self.colors['window_bg']};")
+        
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(20)
+        
+        # Header
+        header = QLabel("⚙️ Settings & Tools")
+        header.setFont(QFont("SF Pro Display", 20, QFont.Bold))
+        header.setStyleSheet(f"color: {self.colors['text_primary']};")
+        layout.addWidget(header)
+        
+        # Section 1: Download Location
+        loc_group = QGroupBox("Download Location")
+        loc_group.setStyleSheet(f"""
+            QGroupBox {{
+                color: {self.colors['text_secondary']};
+                font-weight: bold;
+                border: 1px solid {self.colors['border_light']};
+                border-radius: 12px;
+                margin-top: 20px;
+                padding-top: 15px;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                left: 15px;
+                padding: 0 5px;
+            }}
+        """)
+        loc_layout = QVBoxLayout(loc_group)
+        
+        self.path_label = QLabel(self.settings_manager.get_download_path())
+        self.path_label.setWordWrap(True)
+        self.path_label.setStyleSheet(f"color: {self.colors['text_primary']}; font-size: 13px;")
+        loc_layout.addWidget(self.path_label)
+        
+        self.change_loc_btn = QPushButton("Change Folder")
+        self.change_loc_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.colors['glass_bg']};
+                color: {self.colors['text_primary']};
+                border: 1px solid {self.colors['glass_border']};
+                padding: 8px 15px;
+                border-radius: 8px;
+            }}
+            QPushButton:hover {{
+                background-color: {self.colors['glass_hover']};
+            }}
+        """)
+        self.change_loc_btn.clicked.connect(self._on_change_loc)
+        loc_layout.addWidget(self.change_loc_btn)
+        
+        layout.addWidget(loc_group)
+        
+        # Section 2: Engine Status
+        engine_group = QGroupBox("Core Engine (yt-dlp)")
+        engine_group.setStyleSheet(loc_group.styleSheet())
+        engine_layout = QVBoxLayout(engine_group)
+        
+        status_label = QLabel("Maintenance & Anti-Correction")
+        status_label.setStyleSheet(f"color: {self.colors['text_secondary']}; font-size: 12px;")
+        engine_layout.addWidget(status_label)
+        
+        self.update_btn = QPushButton("🚀 Check for Engine Updates")
+        self.update_btn.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.colors['primary']};
+                color: white;
+                border: none;
+                padding: 10px 15px;
+                border-radius: 8px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {self.colors['primary_hover']};
+            }}
+            QPushButton:disabled {{
+                background-color: {self.colors['border']};
+            }}
+        """)
+        self.update_btn.clicked.connect(self._on_update_engine)
+        engine_layout.addWidget(self.update_btn)
+        
+        # Output Log (Hidden by default)
+        self.log_area = QScrollArea()
+        self.log_area.setWidgetResizable(True)
+        self.log_area.setFixedHeight(100)
+        self.log_area.hide()
+        self.log_text = QLabel("Initializing monitor...")
+        self.log_text.setAlignment(Qt.AlignTop | Qt.AlignLeft)
+        self.log_text.setStyleSheet(f"color: {self.colors['text_secondary']}; font-family: 'Courier'; font-size: 11px; padding: 5px;")
+        self.log_area.setWidget(self.log_text)
+        engine_layout.addWidget(self.log_area)
+        
+        layout.addWidget(engine_group)
+        
+        layout.addStretch()
+        
+        # Bottom Buttons
+        btn_box = QDialogButtonBox(QDialogButtonBox.Ok)
+        btn_box.accepted.connect(self.accept)
+        btn_box.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {self.colors['glass_bg']};
+                color: {self.colors['text_primary']};
+                border: 1px solid {self.colors['glass_border']};
+                padding: 8px 20px;
+                border-radius: 8px;
+            }}
+            QPushButton:hover {{
+                background-color: {self.colors['glass_hover']};
+            }}
+        """)
+        layout.addWidget(btn_box)
+
+    def _on_change_loc(self):
+        current = self.settings_manager.get_download_path()
+        directory = QFileDialog.getExistingDirectory(self, "Select Download Directory", current)
+        if directory:
+            self.settings_manager.set_download_path(directory)
+            self.path_label.setText(directory)
+
+    def _on_update_engine(self):
+        self.update_btn.setEnabled(False)
+        self.update_btn.setText("Updating... Please wait")
+        self.log_area.show()
+        self.log_text.setText("Starting protocol: pip install -U yt-dlp\n")
+        
+        self._update_thread = EngineUpdateThread()
+        thread = self._update_thread
+        if thread:
+            thread.output.connect(self._append_log)
+            thread.finished.connect(self._on_update_finished)
+            thread.start()
+
+    def _append_log(self, text):
+        current = self.log_text.text()
+        # Keep only last 5 lines for display
+        lines = current.split('\n')
+        if len(lines) > 20:
+            lines = lines[-20:]
+        self.log_text.setText('\n'.join(lines) + '\n' + text.strip())
+
+    def _on_update_finished(self, success, full_output):
+        self.update_btn.setEnabled(True)
+        self.update_btn.setText("🚀 Check for Engine Updates")
+        
+        if success:
+            QMessageBox.information(self, "Update Success", "yt-dlp engine has been updated successfully!")
+            self.log_text.setText("Status: SUCCESS - Engine version liberated.")
+        else:
+            QMessageBox.critical(self, "Update Failed", f"Engine update encountered an error:\n{full_output[:200]}...")
+            self.log_text.setText("Status: FAILED - Barrier detected.")
+
+
 class AboutDialog(QDialog):
     """About dialog with macOS 26 Liquid Glass styling"""
     
     def __init__(self, colors: dict, parent=None):
-        super().__init__(parent)
+        QDialog.__init__(self, parent)
         self.colors = colors
         self.setup_ui()
     
@@ -1419,29 +1630,19 @@ class MainWindow(QMainWindow):
         dialog.exec()
     
     def _on_settings_clicked(self):
-        """Show settings dialog"""
-        current_path = self.settings_manager.get_download_path()
-        
-        dialog = QMessageBox(self)
-        dialog.setWindowTitle("Settings")
-        dialog.setText("Download Location Settings")
-        dialog.setInformativeText(f"Current: {current_path}")
-        dialog.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        
-        change_btn = dialog.addButton("Change Location", QMessageBox.ActionRole)
-        
-        result = dialog.exec()
-        
-        if dialog.clickedButton() == change_btn:
-            directory = QFileDialog.getExistingDirectory(
-                self, "Select Download Directory", current_path
-            )
-            if directory:
-                self.settings_manager.set_download_path(directory)
-                QMessageBox.information(
-                    self, "Settings Updated",
-                    f"Download location changed to:\n{directory}"
-                )
+        """Show professional settings dialog"""
+        # Determine current color schema
+        is_dark = self.theme_manager.is_dark_mode()
+        mode = self.theme_manager.get_current_mode()
+        if mode == ThemeMode.SYSTEM:
+            colors = macOSColors.DARK if is_dark else macOSColors.LIGHT
+        elif mode == ThemeMode.DARK:
+            colors = macOSColors.DARK
+        else:
+            colors = macOSColors.LIGHT
+            
+        dialog = SettingsDialog(self.settings_manager, colors, self)
+        dialog.exec()
     
     def closeEvent(self, event):
         """Handle window close event"""

@@ -1,0 +1,11 @@
+# GUI Framework
+PySide6>=6.6.0
+
+# Downloader Engine
+yt-dlp>=2024.0.0
+
+# Video Processing
+ffmpeg-python>=0.2.0
+
+# Utilities
+requests>=2.31.0

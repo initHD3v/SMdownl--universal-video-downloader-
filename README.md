@@ -1,234 +1,85 @@
-# SMdown - Universal Video Downloader for macOS
+# SMdown - Elegant Media Liberation for macOS
 
 <div align="center">
-
-🎬 **Universal Video Downloader untuk macOS (Apple Silicon)**
-
+  <img src="https://raw.githubusercontent.com/initHD3v/SMdownl--universal-video-downloader-/main/assets/icon.png" width="128" height="128" alt="SMdown Icon">
+  <h3>🎬 Universal Video Downloader for the Modern Human</h3>
+  <p><i>Karena terkadang "Save Post" saja tidak cukup untuk memuaskan hasrat kepemilikan digital Anda.</i></p>
 </div>
 
 ---
 
-## 📖 Deskripsi
+## 🛠️ Tech Stack
+Aplikasi ini dibangun di atas fondasi teknologi yang jauh lebih stabil daripada hubungan Anda dengan algoritma media sosial:
 
-SMdown adalah aplikasi desktop untuk macOS yang memungkinkan Anda mengunduh video dari berbagai platform sosial media melalui satu aplikasi yang sederhana dan elegan.
-
-### Platform yang Didukung
-
-- ✅ YouTube
-- ✅ Facebook
-- ✅ Instagram
-- ✅ X (Twitter)
-- ✅ TikTok
+- **Core Engine:** [yt-dlp](https://github.com/yt-dlp/yt-dlp) — Satu-satunya alasan mengapa aplikasi ini benar-benar bekerja.
+- **GUI Framework:** [PySide6 (Qt 6)](https://doc.qt.io/qtforpython-6/) — Memberikan antarmuka macOS 26 (Sequoia) yang terlalu premium untuk sekadar mengunduh video meme.
+- **Processing:** [FFmpeg](https://ffmpeg.org/) — Tukang jahit paket data audio dan video Anda.
+- **Language:** Python 3.11+ — Bahasa yang sama yang digunakan NASA, tapi di sini kita menggunakannya untuk men-download Reels.
 
 ---
 
-## ✨ Fitur
+## 📖 Mengapa SMdown?
+Mari kita jujur: Media sosial ingin memenjara video favorit Anda di dalam "taman vertikal" mereka. SMdown hadir sebagai sertifikat pembebasan untuk video-video tersebut. 
 
-### MVP (Versi 1.0)
-- 📥 Paste video link & fetch metadata
-- 🎬 Tampilkan informasi video (judul, durasi, uploader, thumbnail)
-- 📺 Pilih kualitas video (4K, 1080p, 720p, 480p)
-- 🎵 Download audio only (MP3, M4A)
-- 📊 Real-time progress monitoring
-- 📁 Custom output directory
+Didesain khusus untuk macOS dengan estetika **Liquid Glass**, SMdown bukan hanya sekadar *tool*, tapi sebuah pernyataan bahwa Anda memiliki kendali penuh atas bit dan byte yang melintasi layar Anda.
 
-### Coming Soon
-- ⏳ Download queue dengan pause/resume
-- 📋 Batch download (multiple URLs)
-- 📜 Download history
-- 📋 Clipboard auto-detection
-- 🎵 Extract subtitle
+### Platform yang Kami "Bantu" Bebaskan:
+- ✅ **YouTube** (Termasuk Shorts yang membuat Anda kecanduan)
+- ✅ **Instagram** (Reels estetik yang ingin Anda tonton tanpa watermark)
+- ✅ **Facebook** (Video grup keluarga yang terlalu berharga untuk hilang)
+- ✅ **X / Twitter** (Debat publik 14 detik yang Anda perlukan sebagai bukti)
+- ✅ **TikTok** (Konten vertikal yang menguras waktu produktif Anda)
 
 ---
 
-## 🚀 Instalasi
+## ✨ Fitur Kelas Atas
+- **Hacker Protocol UI:** Status unduhan dengan estetika terminal retro agar Anda merasa seperti sedang meretas sistem (padahal cuma nunggu download selesai).
+- **Auto-Hide Magic:** UI yang cerdas dan minimalist, menyembunyikan diri saat tugasnya selesai—mirip seperti janji manis di media sosial.
+- **Precision Metadata:** Info durasi, uploader, dan thumbnail yang akurat (sekarang sudah tidak crash lagi berkat casting integer yang sakti).
+- **History Tracking:** Karena ingatan manusia itu pendek, kami mencatat apa saja yang sudah Anda "bebaskan".
+- **Liquid Glass Theme:** Mendukung Mode Gelap dan Terang secara dinamis, karena mata Anda layak mendapatkan kenyamanan.
 
-### Prerequisites
+---
 
-- macOS 12.0+ (Apple Silicon recommended)
+## 🚀 Memulai Perlawanan Digital
+
+### Persyaratan
+- macOS 12.0+ (Dioptimalkan untuk Apple Silicon M1-M4)
 - Python 3.11+
-- FFmpeg
+- FFmpeg (Tanpa ini, Anda hanya akan punya video tanpa suara, atau sebaliknya)
 
-### 1. Install FFmpeg
-
+### Instalasi Cepat
 ```bash
-# Menggunakan Homebrew
+# 1. Pastikan FFmpeg ada di sistem Anda
 brew install ffmpeg
 
-# Atau download dari https://ffmpeg.org/download.html
-```
+# 2. Ambil kodenya
+git clone https://github.com/initHD3v/SMdownl--universal-video-downloader-.git
+cd SMdownl--universal-video-downloader-
 
-### 2. Clone & Install Dependencies
-
-```bash
-# Clone repository
-cd smdown
-
-# Buat virtual environment (recommended)
+# 3. Siapkan lingkungan
 python3 -m venv venv
 source venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
-```
 
----
-
-## 📖 Cara Menggunakan
-
-### 1. Jalankan Aplikasi
-
-```bash
+# 4. Lepaskan belenggu digital
 python app/main.py
 ```
 
-### 2. Download Video
+---
 
-1. **Paste URL** video ke dalam input field
-2. Klik **Fetch** untuk mengambil informasi video
-3. Pilih **kualitas** yang diinginkan
-4. Pilih **folder** penyimpanan (opsional)
-5. Klik **Download Video**
-
-### 3. Batch Download
-
-Paste multiple URLs (satu per line):
-```
-https://youtube.com/watch?v=xxxxx
-https://instagram.com/p/xxxxx
-https://x.com/user/status/xxxxx
-```
+## ⚖️ Catatan Hukum (Yang Sebenarnya)
+Aplikasi ini ditujukan untuk penggunaan pribadi yang bertanggung jawab. Kami tidak menyarankan Anda menggunakan SMdown untuk mencuri konten orang lain dan mengklaimnya sebagai milik Anda. Hargai pencipta konten, meskipun Anda baru saja mengunduh video mereka.
 
 ---
 
-## 🏗️ Struktur Project
-
-```
-smdown/
-├── app/
-│   ├── main.py                 # Entry point
-│   ├── ui/
-│   │   ├── main_window.py      # Main window UI
-│   │   └── components/         # UI components
-│   ├── downloader/
-│   │   ├── yt_dlp_engine.py    # yt-dlp wrapper
-│   │   └── queue_manager.py    # Download queue
-│   ├── services/
-│   │   └── clipboard_monitor.py # Clipboard detection
-│   └── utils/
-│       └── file_manager.py     # File utilities
-├── assets/                     # App assets
-├── requirements.txt            # Python dependencies
-└── README.md
-```
-
----
-
-## 🛠️ Tech Stack
-
-| Component | Technology |
-|-----------|------------|
-| Language | Python 3.11+ |
-| GUI Framework | PySide6 (Qt 6) |
-| Downloader Engine | yt-dlp |
-| Video Processing | FFmpeg |
-| Packaging | PyInstaller |
-
----
-
-## 📦 Build .app Bundle
-
-Untuk membuat aplikasi macOS `.app`:
-
-```bash
-# Install pyinstaller
-pip install pyinstaller
-
-# Build untuk Apple Silicon
-pyinstaller --target-arch arm64 --windowed --name "SMdown" --icon=assets/icon.icns app/main.py
-```
-
-Output akan berada di `dist/SMdown.app`
-
----
-
-## ⚙️ Konfigurasi
-
-### Kualitas Video Tersedia
-
-| Kualitas | Resolusi | Keterangan |
-|----------|----------|------------|
-| 4K | 2160p | Highest quality |
-| 1080p | 1920x1080 | Full HD (Recommended) |
-| 720p | 1280x720 | HD |
-| 480p | 854x480 | Standard |
-
-### Format Audio
-
-- **Best Audio**: Highest quality audio
-- **MP3**: Compatible format
-- **M4A**: Apple format
-
----
-
-## 🔧 Troubleshooting
-
-### FFmpeg not found
-
-```bash
-# Pastikan FFmpeg terinstall
-brew install ffmpeg
-
-# Atau tambahkan ke PATH
-export PATH="/usr/local/bin:$PATH"
-```
-
-### Download failed untuk platform tertentu
-
-Beberapa platform memerlukan update engine:
-
-```bash
-# Update yt-dlp
-pip install --upgrade yt-dlp
-```
-
-### App tidak bisa dibuka di macOS
-
-Jika muncul warning "App can't be opened":
-
-```bash
-# Di System Preferences > Security & Privacy, klik "Open Anyway"
-# Atau gunakan command:
-xattr -cr /path/to/SMdown.app
-```
-
----
-
-## 📝 Legal Notice
-
-Aplikasi ini disediakan sebagai tool downloader. User bertanggung jawab atas:
-- Kepatuhan terhadap Terms of Service masing-masing platform
-- Hak cipta dan penggunaan konten yang diunduh
-- Penggunaan pribadi yang wajar
-
----
-
-## 📄 License
-
-MIT License - See LICENSE file for details
-
----
-
-## 🙏 Credits
-
-- **yt-dlp**: https://github.com/yt-dlp/yt-dlp
-- **FFmpeg**: https://ffmpeg.org/
-- **PySide6**: https://doc.qt.io/qtforpython-6/
+## 👨‍💻 Dalang di Balik Layar
+**initialH**  
+📧 [hidayatfauzi6@gmail.com](mailto:hidayatfauzi6@gmail.com)  
+🌐 [GitHub @initHD3v](https://github.com/initHD3v)
 
 ---
 
 <div align="center">
-
-**SMdown** v1.0 - Made with ❤️ for macOS
-
+  <p><b>SMdown</b> v1.2.0 — Dibuat dengan ❤️ dan sedikit rasa sarkas terhadap batasan platform.</p>
 </div>

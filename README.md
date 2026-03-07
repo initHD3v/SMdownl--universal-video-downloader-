@@ -32,15 +32,6 @@ Didesain khusus untuk macOS dengan estetika **Liquid Glass**, SMdown bukan hanya
 
 ---
 
-## ✨ Fitur Kelas Atas
-- **Hacker Protocol UI:** Status unduhan dengan estetika terminal retro agar Anda merasa seperti sedang meretas sistem (padahal cuma nunggu download selesai).
-- **Auto-Hide Magic:** UI yang cerdas dan minimalist, menyembunyikan diri saat tugasnya selesai—mirip seperti janji manis di media sosial.
-- **Precision Metadata:** Info durasi, uploader, dan thumbnail yang akurat (sekarang sudah tidak crash lagi berkat casting integer yang sakti).
-- **History Tracking:** Karena ingatan manusia itu pendek, kami mencatat apa saja yang sudah Anda "bebaskan".
-- **Liquid Glass Theme:** Mendukung Mode Gelap dan Terang secara dinamis, karena mata Anda layak mendapatkan kenyamanan.
-
----
-
 ## 🚀 Memulai Perlawanan Digital
 
 ### Persyaratan
@@ -75,7 +66,6 @@ Aplikasi ini ditujukan untuk penggunaan pribadi yang bertanggung jawab. Kami tid
 
 ## 👨‍💻 Dalang di Balik Layar
 **initialH**  
-📧 [hidayatfauzi6@gmail.com](mailto:hidayatfauzi6@gmail.com)  
 🌐 [GitHub @initHD3v](https://github.com/initHD3v)
 
 ---

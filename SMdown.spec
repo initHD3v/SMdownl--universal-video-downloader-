@@ -1,26 +1,43 @@
 """
 PyInstaller spec file for SMdown
 Build command: pyinstaller SMdown.spec
+
+NOTE: Using ONEDIR mode for faster startup on macOS
 """
 
 # -*- mode: python ; coding: utf-8 -*-
 
+import os
+import sys
+from PyInstaller.building.build_main import Analysis
+from PyInstaller.building.datastruct import Tree
+from PyInstaller.building.api import PYZ, EXE, COLLECT, PKG
+from PyInstaller.building.osx import BUNDLE
+
 block_cipher = None
+
+# Get absolute path to project root (spec file directory)
+spec_dir = os.getcwd()
+assets_dir = os.path.join(spec_dir, 'assets')
 
 a = Analysis(
     ['app/main.py'],
-    pathex=[],
+    pathex=[spec_dir],
     binaries=[],
-    datas=[('assets', 'assets')],
+    datas=[(assets_dir, 'assets')],
     hiddenimports=[
         'yt_dlp',
         'yt_dlp.extractor',
         'yt_dlp.postprocessor',
+        'yt_dlp.extractor.extractors',
         'PySide6',
         'PySide6.QtWidgets',
         'PySide6.QtCore',
         'PySide6.QtGui',
+        'PySide6.QtNetwork',
         'ffmpeg',
+        'certifi',
+        'requests',
     ],
     hookspath=[],
     hooksconfig={},
@@ -45,25 +62,31 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=False,  # GUI app
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch='arm64',  # Apple Silicon
+    target_arch='arm64',
     codesign_identity=None,
     entitlements_file=None,
-    icon='assets/icon.icns',
 )
 
+# ONEDIR MODE BUNDLE
 app = BUNDLE(
     exe,
     name='SMdown.app',
-    icon='assets/icon.icns',
+    icon=os.path.join(assets_dir, 'logo.png'),
     bundle_identifier='com.smdown.app',
     info_plist={
         'NSHighResolutionCapable': 'True',
         'LSMinimumSystemVersion': '12.0',
+        'LSBackgroundOnly': 'False',  # Show in dock
+        'NSSupportsAutomaticGraphicsSwitching': 'True',
+        'NSAppTransportSecurity': {
+            'NSAllowsArbitraryLoads': True,
+        },
     },
+    entitlements_file='entitlements.plist',
 )

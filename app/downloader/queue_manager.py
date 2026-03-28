@@ -225,8 +225,15 @@ class QueueManager(QObject):
     
     def _download_worker(self, item: QueueItem):
         """Worker thread for downloading items"""
-        logger.info("Download worker started for item %d: %s", item.id, item.metadata.title if item.metadata else item.url)  # pyre-ignore[16]
-        
+        logger.info("=" * 60)
+        logger.info("Download worker STARTED for item %d", item.id)
+        logger.info("  URL: %s", item.url)
+        logger.info("  Title: %s", item.metadata.title if item.metadata else "N/A")  # pyre-ignore[16]
+        logger.info("  Output path: %s", item.output_path)
+        logger.info("  Quality: %s", item.quality)
+        logger.info("  Path exists: %s", os.path.exists(item.output_path) if item.output_path else "N/A")
+        logger.info("=" * 60)
+
         # Create progress callback that properly updates item
         def progress_callback(progress: DownloadProgress):
             """Handle progress updates"""
@@ -247,22 +254,26 @@ class QueueManager(QObject):
                     if progress.status == 'error':
                         item.status = QueueItemStatus.ERROR
                         item.error = progress.error
+                        logger.error("Download error for item %d: %s", item.id, progress.error)
                     elif progress.status == 'completed':
                         item.status = QueueItemStatus.COMPLETED
                         item.completed_at = datetime.now()
+                        logger.info("Download COMPLETED for item %d: %s", item.id, progress.filename)
 
                 # Notify UI (Signal is cross-thread safe inherently)
                 self._emit_update('progress_updated', item)
-                    
+
             except Exception as e:
-                logger.error("Error in progress callback: %s", e)
+                logger.error("Error in progress callback for item %d: %s", item.id, e, exc_info=True)
 
         try:
             # Get platform from metadata for auto quality selection
             platform = item.metadata.platform if item.metadata else None  # pyre-ignore[16]
 
             logger.info("Calling engine.download() for item %d: %s", item.id, item.metadata.title if item.metadata else item.url)  # pyre-ignore[16]
-            
+            logger.info("  Platform: %s", platform)
+            logger.info("  Output path writable: %s", os.access(item.output_path, os.W_OK) if item.output_path else "N/A")
+
             success = self._engine.download(
                 url=item.url,
                 output_path=item.output_path,
@@ -270,8 +281,10 @@ class QueueManager(QObject):
                 progress_callback=progress_callback,
                 platform=platform,
             )
-            
+
             logger.info("Download completed for item %d: success=%s, filename=%s", item.id, success, item.filename)
+            logger.info("  Final status: %s", item.status.value)
+            logger.info("  Final error: %s", item.error if item.error else "None")
 
             if not success:
                 with self._lock:
@@ -280,6 +293,7 @@ class QueueManager(QObject):
                         item.status = QueueItemStatus.ERROR
                     if not item.error:
                         item.error = "Download failed"
+                logger.error("Download marked as failed for item %d", item.id)
 
         except Exception as e:
             logger.error("Download worker error for item %d: %s", item.id, e, exc_info=True)
@@ -292,11 +306,12 @@ class QueueManager(QObject):
             with self._lock:
                 if item.id in self._active_downloads:
                     self._active_downloads.pop(item.id)
-            
+
             # Notify UI
             self._emit_update('item_updated', item)
-            
-            logger.info("Download worker finished for item %d", item.id)
+
+            logger.info("Download worker FINISHED for item %d", item.id)
+            logger.info("=" * 60)
 
     def start_queue(self):
         """Start processing the download queue"""
@@ -318,16 +333,17 @@ class QueueManager(QObject):
                 
                 if active_count < self.max_concurrent:
                     logger.info("Starting download thread for item %d: %s", item.id, item.metadata.title if item.metadata else "Unknown")  # pyre-ignore[16]
-                    
+
                     # Set status to DOWNLOADING before starting thread
                     with self._lock:
                         item.status = QueueItemStatus.DOWNLOADING
-                    
-                    thread = threading.Thread(target=self._download_worker, args=(item,), daemon=True, name=f"Download-{item.id}")
-                    
+
+                    # Use daemon=False to ensure download completes even if app closes
+                    thread = threading.Thread(target=self._download_worker, args=(item,), daemon=False, name=f"Download-{item.id}")
+
                     with self._lock:
                         self._active_downloads[item.id] = thread
-                    
+
                     thread.start()
                     logger.info("Thread started for item %d (daemon=%s)", item.id, thread.daemon)
                 else:
@@ -345,8 +361,6 @@ class QueueManager(QObject):
         """Remove completed and cancelled items from queue"""
         with self._lock:
             self._queue = [
-                item for item in self._queue 
+                item for item in self._queue
                 if item.status not in [QueueItemStatus.COMPLETED, QueueItemStatus.CANCELLED]
             ]
-        if self._download_callback:
-            self._download_callback('queue_cleared', None)

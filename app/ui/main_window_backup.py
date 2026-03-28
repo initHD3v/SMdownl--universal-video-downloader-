@@ -132,7 +132,7 @@ class VideoInfoWidget(QWidget):
         
         # Title
         self.title_label = QLabel("Video Title")
-        self.title_label.setFont(QFont("SF Pro Display", 16, QFont.Bold))
+        self.title_label.setFont(QFont(".AppleSystemUIFont", 16, QFont.Bold))
         self.title_label.setWordWrap(True)
         self.title_label.setStyleSheet("color: #ffffff;")
         details_layout.addWidget(self.title_label)
@@ -263,7 +263,7 @@ class AutoQualityLabel(QWidget):
         title_layout.addWidget(icon)
         
         title = QLabel("Auto Quality")
-        title.setFont(QFont("SF Pro Display", 13, QFont.Bold))
+        title.setFont(QFont(".AppleSystemUIFont", 13, QFont.Bold))
         title.setStyleSheet("color: #00d4aa;")
         title_layout.addWidget(title)
         
@@ -330,7 +330,7 @@ class QueueItemWidget(QWidget):
         title_layout = QHBoxLayout()
         
         self.title_label = QLabel(self.item.metadata.title if self.item.metadata else "Fetching...")
-        self.title_label.setFont(QFont("SF Pro Display", 12, QFont.Bold))
+        self.title_label.setFont(QFont(".AppleSystemUIFont", 12, QFont.Bold))
         self.title_label.setStyleSheet("color: #ffffff;")
         self.title_label.setWordWrap(True)
         title_layout.addWidget(self.title_label)
@@ -502,7 +502,7 @@ class MainWindow(QMainWindow):
         header_layout.setSpacing(5)
         
         title = QLabel("🎬 SMdown")
-        title.setFont(QFont("SF Pro Display", 28, QFont.Bold))
+        title.setFont(QFont(".AppleSystemUIFont", 28, QFont.Bold))
         title.setStyleSheet("color: #ffffff;")
         header_layout.addWidget(title)
         
@@ -562,7 +562,7 @@ class MainWindow(QMainWindow):
         
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("Paste video link here (YouTube, Facebook, Instagram, X...)")
-        self.url_input.setFont(QFont("SF Pro Display", 13))
+        self.url_input.setFont(QFont(".AppleSystemUIFont", 13))
         self.url_input.setStyleSheet("""
             QLineEdit {
                 background-color: #1a1a2e;
@@ -578,7 +578,7 @@ class MainWindow(QMainWindow):
         input_layout.addWidget(self.url_input)
         
         self.fetch_btn = QPushButton("📥 Fetch")
-        self.fetch_btn.setFont(QFont("SF Pro Display", 13, QFont.Bold))
+        self.fetch_btn.setFont(QFont(".AppleSystemUIFont", 13, QFont.Bold))
         self.fetch_btn.setFixedWidth(100)
         self.fetch_btn.setStyleSheet("""
             QPushButton {
@@ -668,7 +668,7 @@ class MainWindow(QMainWindow):
         
         # Download button
         self.download_btn = QPushButton("⬇ Download Video")
-        self.download_btn.setFont(QFont("SF Pro Display", 14, QFont.Bold))
+        self.download_btn.setFont(QFont(".AppleSystemUIFont", 14, QFont.Bold))
         self.download_btn.setFixedHeight(50)
         self.download_btn.setStyleSheet("""
             QPushButton {
@@ -710,7 +710,7 @@ class MainWindow(QMainWindow):
         header_layout = QHBoxLayout()
         
         queue_title = QLabel("📋 Download Queue")
-        queue_title.setFont(QFont("SF Pro Display", 14, QFont.Bold))
+        queue_title.setFont(QFont(".AppleSystemUIFont", 14, QFont.Bold))
         queue_title.setStyleSheet("color: #ffffff;")
         header_layout.addWidget(queue_title)
         

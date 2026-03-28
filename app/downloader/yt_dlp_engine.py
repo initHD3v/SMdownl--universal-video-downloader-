@@ -308,6 +308,53 @@ class YtDlpEngine:
         minutes = eta_val // 60
         seconds = eta_val % 60
         return f"{minutes:02d}:{seconds:02d}"
+
+    def _predict_output_filename(self, outtmpl: str, url: str) -> Optional[str]:
+        """
+        Check if a file with similar name already exists
+        
+        Args:
+            outtmpl: Output template (e.g., '/path/%(title)s_%(height)sp.%(ext)s')
+            url: Video URL
+            
+        Returns:
+            Existing filename if found, None otherwise
+        """
+        try:
+            # Fetch metadata to get title
+            metadata = self.fetch_metadata(url)
+            if not metadata:
+                return None
+            
+            # Get base title
+            title = metadata.title
+            
+            # Check directory for similar files
+            output_dir = os.path.dirname(outtmpl)
+            if not os.path.isdir(output_dir):
+                return None
+            
+            # Look for files with same base title (case-insensitive, normalize special chars)
+            def normalize(s):
+                # Replace various pipe/special chars with regular versions
+                s = s.replace('｜', '|').replace('@', '').strip()
+                return "".join(c for c in s.lower() if c.isalnum() or c in ' -_').strip()
+            
+            safe_title = normalize(title)
+            logger.info("Looking for files matching: '%s' in %s", safe_title, output_dir)
+            
+            for filename in os.listdir(output_dir):
+                if filename.lower().endswith('.mp4'):
+                    safe_filename = normalize(filename)
+                    if safe_filename.startswith(safe_title):
+                        logger.info("Found existing file: %s", filename)
+                        return os.path.join(output_dir, filename)
+            
+            logger.info("No matching files found")
+            return None
+        except Exception as e:
+            logger.debug("Cannot check for existing files: %s", e, exc_info=True)
+            return None
     
     def download(
         self,
@@ -320,14 +367,17 @@ class YtDlpEngine:
     ) -> bool:
         """
         Download video with specified quality
+        
+        Returns:
+            bool: True if download succeeded, False if skipped/failed
         """
         import socket
-        
+
         self._progress_hook = progress_callback
 
         # Clean URL for download
         clean_url = self._clean_youtube_url(url)
-        
+
         # Auto-select quality based on platform if BEST is specified
         if quality == VideoQuality.BEST and platform:
             quality = self.get_auto_quality(platform)
@@ -338,6 +388,28 @@ class YtDlpEngine:
             outtmpl = os.path.join(output_path, filename_template)
         else:
             outtmpl = os.path.join(output_path, self.output_template)
+
+        # Check for duplicate file BEFORE download
+        logger.info("Checking for duplicate files...")
+        expected_filename = self._predict_output_filename(outtmpl, clean_url)
+        if expected_filename:
+            logger.info("Predicted filename: %s", expected_filename)
+        if expected_filename and os.path.exists(expected_filename):
+            logger.warning("File already exists: %s", expected_filename)
+            # Notify callback about skip
+            progress_callback(DownloadProgress(
+                status='error',
+                progress=0,
+                speed='',
+                eta='',
+                downloaded_bytes=0,
+                total_bytes=0,
+                filename=expected_filename,
+                error=f"File already exists: {os.path.basename(expected_filename)}",
+            ))
+            return False
+        else:
+            logger.info("No duplicate found, proceeding with download")
 
         # Configure yt-dlp options based on quality
         ydl_opts: Dict[str, Any] = {
@@ -350,6 +422,10 @@ class YtDlpEngine:
             'socket_timeout': 30,
             # Extractor timeout
             'extractor_retries': 2,
+            # Skip download if file exists
+            'skip_download': False,
+            # Don't overwrite existing files
+            'nooverwrites': True,
         }
 
         if quality in [VideoQuality.AUDIO_BEST, VideoQuality.AUDIO_MP3, VideoQuality.AUDIO_M4A]:

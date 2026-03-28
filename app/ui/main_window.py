@@ -36,6 +36,8 @@ from app.services.clipboard_monitor import ClipboardMonitor  # pyre-ignore[21]
 from app.services.theme_manager import ThemeManager, ThemeMode  # pyre-ignore[21]
 from app.services.history_manager import HistoryManager, HistoryItem  # pyre-ignore[21]
 from app.services.settings_manager import SettingsManager  # pyre-ignore[21]
+from app.utils.path_utils import get_resource_path  # pyre-ignore[21]
+from app.utils.timing import log_timing, timed_function, timed_block  # pyre-ignore[21]
 
 logger = logging.getLogger(__name__)
 
@@ -261,7 +263,7 @@ class SettingsCard(QFrame):
         header_layout.setContentsMargins(0, 0, 0, 5)
         
         self.title_label = QLabel(title_text)
-        self.title_label.setFont(QFont("SF Pro Display", 14, QFont.Bold))
+        self.title_label.setFont(QFont(".AppleSystemUIFont", 14, QFont.Bold))
         self.title_label.setStyleSheet(f"color: {self.colors['text_primary']}; border: none; background: transparent;")
         header_layout.addWidget(self.title_label)
         header_layout.addStretch()
@@ -326,7 +328,7 @@ class SettingsDialog(QDialog):
         header_layout.setContentsMargins(30, 25, 30, 25)
         
         title = QLabel("Settings & Maintenance")
-        title.setFont(QFont("SF Pro Display", 24, QFont.Bold))
+        title.setFont(QFont(".AppleSystemUIFont", 24, QFont.Bold))
         title.setStyleSheet(f"color: {self.colors['text_primary']};")
         header_layout.addWidget(title)
         
@@ -352,7 +354,7 @@ class SettingsDialog(QDialog):
         self.storage_card = SettingsCard("📂 Storage & Path", self.colors)
         
         path_header = QLabel("Download Destination")
-        path_header.setFont(QFont("SF Pro Display", 13, QFont.Medium))
+        path_header.setFont(QFont(".AppleSystemUIFont", 13, QFont.Medium))
         path_header.setStyleSheet(f"color: {self.colors['text_secondary']};")
         self.storage_card.add_widget(path_header)
         
@@ -373,7 +375,7 @@ class SettingsDialog(QDialog):
         
         # yt-dlp section
         yt_header = QLabel("Downloader Engine (yt-dlp)")
-        yt_header.setFont(QFont("SF Pro Display", 13, QFont.Medium))
+        yt_header.setFont(QFont(".AppleSystemUIFont", 13, QFont.Medium))
         yt_header.setStyleSheet(f"color: {self.colors['text_secondary']};")
         self.maintenance_card.add_widget(yt_header)
         
@@ -384,7 +386,7 @@ class SettingsDialog(QDialog):
         
         # App section
         app_header = QLabel(f"Application Software (v{APP_VERSION})")
-        app_header.setFont(QFont("SF Pro Display", 13, QFont.Medium))
+        app_header.setFont(QFont(".AppleSystemUIFont", 13, QFont.Medium))
         app_header.setStyleSheet(f"color: {self.colors['text_secondary']};")
         self.maintenance_card.add_widget(app_header)
         
@@ -601,29 +603,30 @@ class AboutDialog(QDialog):
         # Icon/Label Header
         header_layout = QVBoxLayout()
         header_layout.setAlignment(Qt.AlignCenter)
-        
-        logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "logo.png")
+
+        logo_path = get_resource_path('assets/logo.png')
         app_icon = QLabel()
         if os.path.exists(logo_path):
             pixmap = QPixmap(logo_path)
             # Resize appropriately
             app_icon.setPixmap(pixmap.scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         else:
+            logger.warning("Logo not found at: %s", logo_path)
             app_icon.setText("⬇️") # Fallback
-            app_icon.setFont(QFont("SF Pro Display", 48))
+            app_icon.setFont(QFont(".AppleSystemUIFont", 48))
             
         app_icon.setAlignment(Qt.AlignCenter)
         header_layout.addWidget(app_icon)
 
         
         app_title = QLabel("SMdown")
-        app_title.setFont(QFont("SF Pro Display", 24, QFont.Bold))
+        app_title.setFont(QFont(".AppleSystemUIFont", 24, QFont.Bold))
         app_title.setStyleSheet(f"color: {self.colors['text_primary']};")
         app_title.setAlignment(Qt.AlignCenter)
         header_layout.addWidget(app_title)
         
         app_version = QLabel("Version 1.2.0")
-        app_version.setFont(QFont("SF Pro Display", 13))
+        app_version.setFont(QFont(".AppleSystemUIFont", 13))
         app_version.setStyleSheet(f"color: {self.colors['text_secondary']};")
         app_version.setAlignment(Qt.AlignCenter)
         header_layout.addWidget(app_version)
@@ -634,7 +637,7 @@ class AboutDialog(QDialog):
         desc = QLabel("Elegant and powerful social media downloader for macOS.")
         desc.setWordWrap(True)
         desc.setAlignment(Qt.AlignCenter)
-        desc.setFont(QFont("SF Pro Display", 13))
+        desc.setFont(QFont(".AppleSystemUIFont", 13))
         desc.setStyleSheet(f"color: {self.colors['text_primary']};")
         layout.addWidget(desc)
         
@@ -660,7 +663,7 @@ class AboutDialog(QDialog):
         github_link = QLabel('<a href="https://github.com/initHD3v" style="color: %s; text-decoration: none;">GitHub @initHD3v</a>' % self.colors['primary'])
         github_link.setAlignment(Qt.AlignCenter)
         github_link.setOpenExternalLinks(True)
-        github_link.setFont(QFont("SF Pro Display", 13, QFont.Medium))
+        github_link.setFont(QFont(".AppleSystemUIFont", 13, QFont.Medium))
         layout.addWidget(github_link)
         
         layout.addStretch()
@@ -724,7 +727,7 @@ class HistoryDialog(QDialog):
         header_layout = QHBoxLayout()
         
         header = QLabel("📜 Download History")
-        header.setFont(QFont("SF Pro Display", 22, QFont.Bold))
+        header.setFont(QFont(".AppleSystemUIFont", 22, QFont.Bold))
         header.setStyleSheet(f"color: {self.colors['text_primary']};")
         header_layout.addWidget(header)
         
@@ -914,7 +917,7 @@ class HistoryItemWidget(QWidget):
         else:
             icon = PLATFORM_ICONS.get(self.item.platform, '📹')
             self.thumb_container.setText(icon)
-            self.thumb_container.setFont(QFont("SF Pro Display", 24))
+            self.thumb_container.setFont(QFont(".AppleSystemUIFont", 24))
             
         card_layout.addWidget(self.thumb_container)
         
@@ -924,7 +927,7 @@ class HistoryItemWidget(QWidget):
         
         title_row = QHBoxLayout()
         title = QLabel(self.item.title)
-        title.setFont(QFont("SF Pro Display", 14, QFont.Bold))
+        title.setFont(QFont(".AppleSystemUIFont", 14, QFont.Bold))
         title.setWordWrap(False)
         title.setStyleSheet(f"color: {self.colors['text_primary']};")
         title_row.addWidget(title, 1)
@@ -1195,7 +1198,7 @@ class PreviewCard(QWidget):
         details_column.setAlignment(Qt.AlignVCenter)
         
         self.title_label = QLabel("Video Title")
-        self.title_label.setFont(QFont("SF Pro Display", 15, QFont.Bold))
+        self.title_label.setFont(QFont(".AppleSystemUIFont", 15, QFont.Bold))
         self.title_label.setWordWrap(True)
         self.title_label.setMaximumHeight(40)
         details_column.addWidget(self.title_label)
@@ -1205,11 +1208,11 @@ class PreviewCard(QWidget):
         metadata_row.setSpacing(6)
         
         self.platform_icon = QLabel("")
-        self.platform_icon.setFont(QFont("SF Pro Display", 14))
+        self.platform_icon.setFont(QFont(".AppleSystemUIFont", 14))
         metadata_row.addWidget(self.platform_icon)
         
         self.uploader_label = QLabel("Channel")
-        self.uploader_label.setFont(QFont("SF Pro Display", 12))
+        self.uploader_label.setFont(QFont(".AppleSystemUIFont", 12))
         metadata_row.addWidget(self.uploader_label)
         
         self.separator = QLabel("•")
@@ -1217,7 +1220,7 @@ class PreviewCard(QWidget):
         metadata_row.addWidget(self.separator)
         
         self.duration_label = QLabel("0:00")
-        self.duration_label.setFont(QFont("SF Pro Display", 12))
+        self.duration_label.setFont(QFont(".AppleSystemUIFont", 12))
         metadata_row.addWidget(self.duration_label)
         
         metadata_row.addStretch()
@@ -1225,7 +1228,7 @@ class PreviewCard(QWidget):
         
         # Quality Row
         self.quality_row = QLabel("Quality: Auto Best Available")
-        self.quality_row.setFont(QFont("SF Pro Display", 13))
+        self.quality_row.setFont(QFont(".AppleSystemUIFont", 13))
         details_column.addWidget(self.quality_row)
         
         card_content_layout.addLayout(details_column, 1)
@@ -1359,37 +1362,97 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        
-        # Initialize managers
-        self.engine = YtDlpEngine()
-        self.queue_manager = QueueManager(max_concurrent=1)
-        self.queue_manager.queue_updated.connect(self._on_queue_update)
-        self.history_manager = HistoryManager()
-        self.settings_manager = SettingsManager()
-        self.clipboard_monitor = ClipboardMonitor(check_interval=2.0)
-        
-        # Theme manager with app reference
-        from PySide6.QtWidgets import QApplication  # pyre-ignore[21]
-        self.theme_manager = ThemeManager(QApplication.instance())
-        
+        log_timing("MainWindow.__init__ START")
+
+        with timed_block("Initialize Managers"):
+            # Initialize managers (lazy load non-critical ones)
+            log_timing("  Creating YtDlpEngine...")
+            self.engine = YtDlpEngine()
+            log_timing("  YtDlpEngine created")
+            
+            log_timing("  Creating QueueManager...")
+            self.queue_manager = QueueManager(max_concurrent=1)
+            self.queue_manager.queue_updated.connect(self._on_queue_update)
+            log_timing("  QueueManager created")
+            
+            # Lazy load these to speed up startup
+            self._history_manager = None
+            self._clipboard_monitor = None
+            
+            log_timing("  Creating SettingsManager...")
+            self.settings_manager = SettingsManager()
+            log_timing("  SettingsManager created")
+
+        with timed_block("Initialize Theme Manager"):
+            # Theme manager with app reference
+            from PySide6.QtWidgets import QApplication  # pyre-ignore[21]
+            log_timing("  Creating ThemeManager...")
+            self.theme_manager = ThemeManager(QApplication.instance())
+            log_timing("  ThemeManager created")
+
         # State
         self._metadata_thread: Optional[MetadataFetcherThread] = None
         self._current_metadata: Optional[VideoMetadata] = None
         self._thumbnail_thread: Optional[ThumbnailFetchThread] = None
         
+        # Keep reference to download threads to prevent garbage collection
+        self._download_threads: List[threading.Thread] = []
+
         # Setup UI
-        self.setup_ui()
-        self.setup_connections()
+        log_timing("Calling setup_ui()...")
+        with timed_block("Setup UI"):
+            self.setup_ui()
+        log_timing("setup_ui() done")
         
+        log_timing("Calling setup_connections()...")
+        with timed_block("Setup Connections"):
+            self.setup_connections()
+        log_timing("setup_connections() done")
+
         # Apply initial theme
-        self._update_styles()
+        log_timing("Applying theme styles...")
+        with timed_block("Apply Theme"):
+            self._update_styles()
+        log_timing("Theme styles applied")
+
+        log_timing("MainWindow.__init__ COMPLETE")
         
-        logger.info("MainWindow initialized with macOS 26 design")
+        # Lazy load non-critical services AFTER window is shown
+        # Use singleShot to ensure window is displayed first
+        QTimer.singleShot(500, self._lazy_init_services)
+    
+    def _lazy_init_services(self):
+        """Lazy initialize non-critical services after window is shown"""
+        log_timing("_lazy_init_services START")
+        
+        with timed_block("Lazy Init HistoryManager"):
+            # Initialize history manager in background
+            try:
+                log_timing("  Creating HistoryManager...")
+                self._history_manager = HistoryManager()
+                log_timing("  HistoryManager initialized (lazy)")
+            except Exception as e:
+                logger.error("Failed to lazy init HistoryManager: %s", e, exc_info=True)
+        
+        # DISABLE ClipboardMonitor - causes hang in bundled app
+        # with timed_block("Lazy Init ClipboardMonitor"):
+        #     # Start clipboard monitor in background
+        #     try:
+        #         log_timing("  Creating ClipboardMonitor...")
+        #         self._clipboard_monitor = ClipboardMonitor(check_interval=2.0)
+        #         log_timing("  Starting ClipboardMonitor...")
+        #         self._clipboard_monitor.start(self._on_clipboard_video_detected)
+        #         log_timing("  ClipboardMonitor started (lazy)")
+        #     except Exception as e:
+        #         logger.error("Failed to lazy init ClipboardMonitor: %s", e, exc_info=True)
+        
+        log_timing("_lazy_init_services COMPLETE (clipboard monitor disabled)")
         
     def _update_styles(self):
         """Update stylesheets for all child widgets dynamically based on the current theme"""
+        log_timing("_update_styles START")
         mode = self.theme_manager.get_current_mode()
-        
+
         # Determine the appearance context (System resolves to either Light or Dark in PySide)
         is_dark = self.theme_manager.is_dark_mode()
         if mode == ThemeMode.SYSTEM:
@@ -1399,18 +1462,21 @@ class MainWindow(QMainWindow):
             colors = macOSColors.DARK
         else:
             colors = macOSColors.LIGHT
-            
+
         # Update Main Window Background
+        log_timing("  Applying QMainWindow style...")
         self.setStyleSheet(f"""
             QMainWindow {{
                 background-color: {colors['window_bg']};
             }}
         """)
-        
+
         # Update Header Title
+        log_timing("  Applying title_label_ref style...")
         self.title_label_ref.setStyleSheet(f"color: {colors['text_primary']};")
-        
+
         # Update Theme Button
+        log_timing("  Applying theme_btn style...")
         self.theme_btn.setStyleSheet(f"""
             QToolButton {{
                 background-color: {colors['glass_bg']};
@@ -1427,8 +1493,9 @@ class MainWindow(QMainWindow):
                 background-color: {colors['glass_pressed']};
             }}
         """)
-        
+
         # Update URL Input
+        log_timing("  Applying url_input style...")
         self.url_input.setStyleSheet(f"""
             QLineEdit {{
                 background-color: {colors['glass_bg']};
@@ -1443,8 +1510,9 @@ class MainWindow(QMainWindow):
                 background-color: {colors['card_glass']};
             }}
         """)
-        
+
         # Update Fetch Button
+        log_timing("  Applying fetch_btn style...")
         self.fetch_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {colors['primary']};
@@ -1464,11 +1532,13 @@ class MainWindow(QMainWindow):
                 background-color: {colors['border']};
             }}
         """)
-        
+
         # Update Status Widget
+        log_timing("  Applying status_widget styles...")
         self.status_widget.update_styles(colors)
-        
+
         # Control Buttons Container Styles
+        log_timing("  Applying control button styles...")
         btn_style = f"""
             QPushButton {{
                 background-color: {colors['glass_bg']};
@@ -1491,9 +1561,12 @@ class MainWindow(QMainWindow):
         self.settings_btn.setStyleSheet(btn_style)
         self.history_btn.setStyleSheet(btn_style)
         self.about_btn.setStyleSheet(btn_style)
-        
+
         # Propagate to sub-widgets
+        log_timing("  Applying preview_card styles...")
         self.preview_card.update_styles(colors)
+
+        log_timing("_update_styles COMPLETE")
         
 
     
@@ -1510,11 +1583,15 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("SMdown - video downloader")
         self.setMinimumSize(850, 700)
         self.resize(950, 750)
-        
+
         # Set Window Icon
-        logo_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "assets", "logo.png")
+        logo_path = get_resource_path('assets/logo.png')
+        logger.info("Loading window icon from: %s", logo_path)
+        logger.info("Icon exists: %s", os.path.exists(logo_path))
         if os.path.exists(logo_path):
             self.setWindowIcon(QIcon(logo_path))
+        else:
+            logger.warning("Window icon not found at: %s", logo_path)
 
         
         # Central widget
@@ -1530,7 +1607,7 @@ class MainWindow(QMainWindow):
         
         # App title
         self.title_label_ref = QLabel("SMdown - video downloader")
-        self.title_label_ref.setFont(QFont("SF Pro Display", 20, QFont.Bold))
+        self.title_label_ref.setFont(QFont(".AppleSystemUIFont", 20, QFont.Bold))
         header_layout.addWidget(self.title_label_ref)
         
         header_layout.addStretch()
@@ -1551,7 +1628,7 @@ class MainWindow(QMainWindow):
         
         self.url_input = QLineEdit()
         self.url_input.setPlaceholderText("Paste a YouTube, Facebook, Instagram, or X video link...")
-        self.url_input.setFont(QFont("SF Pro Display", 14))
+        self.url_input.setFont(QFont(".AppleSystemUIFont", 14))
         self.url_input.setFixedHeight(48)
         self.url_input.setAttribute(Qt.WA_TranslucentBackground, True)
         input_layout.addWidget(self.url_input, 1)
@@ -1673,9 +1750,9 @@ class MainWindow(QMainWindow):
         self.settings_btn.clicked.connect(self._on_settings_clicked)
         self.history_btn.clicked.connect(self._on_history_clicked)
         self.about_btn.clicked.connect(self._on_about_clicked)
-        
-        # Start clipboard monitor
-        self.clipboard_monitor.start(self._on_clipboard_video_detected)
+
+        # Clipboard monitor is now lazy-loaded after window is shown
+        # (see _lazy_init_services)
     
     def _on_theme_toggle(self):
         """Handle theme toggle button click"""
@@ -1842,10 +1919,40 @@ class MainWindow(QMainWindow):
                 QTimer.singleShot(0, lambda: QMessageBox.critical(
                     self, "Download Error", f"Failed to start download:\n{str(e)}"
                 ))
+            finally:
+                # Clean up finished threads from reference list
+                self._cleanup_download_threads()
 
-        thread = threading.Thread(target=process_queue, daemon=True)
+        # Use daemon=False so download continues even if main thread exits
+        thread = threading.Thread(target=process_queue, daemon=False, name=f"DownloadQueue-{datetime.now().strftime('%H%M%S')}")
+        
+        # Keep reference to prevent garbage collection
+        self._download_threads.append(thread)
+        
         thread.start()
+        logger.info("Download queue thread started: %s", thread.name)
     
+    def _cleanup_download_threads(self):
+        """Remove finished threads from reference list to prevent memory leak"""
+        self._download_threads = [t for t in self._download_threads if t.is_alive()]
+    
+    @property
+    def history_manager(self):
+        """Lazy access to history manager"""
+        if self._history_manager is None:
+            self._history_manager = HistoryManager()
+            logger.info("HistoryManager initialized on first access")
+        return self._history_manager
+    
+    @property
+    def clipboard_monitor(self):
+        """Lazy access to clipboard monitor"""
+        if self._clipboard_monitor is None:
+            self._clipboard_monitor = ClipboardMonitor(check_interval=2.0)
+            self._clipboard_monitor.start(self._on_clipboard_video_detected)
+            logger.info("ClipboardMonitor initialized on first access")
+        return self._clipboard_monitor
+
     def _on_queue_update(self, event: str, item: Optional[QueueItem]):
         """Handle queue manager updates"""
         # Always update UI from main thread using QTimer
@@ -1855,10 +1962,28 @@ class MainWindow(QMainWindow):
             # We must create a copy of the item data or capture its ID to pass it to the timer safely
             item_id = item.id
             QTimer.singleShot(0, lambda: self._update_queue_item_progress(item_id))
-        
+
         # Check for completed downloads
         if event == 'item_updated' and item:
-            if item.status in [QueueItemStatus.COMPLETED, QueueItemStatus.ERROR, QueueItemStatus.CANCELLED]:
+            if item.status == QueueItemStatus.ERROR:
+                # Show error notification
+                error_msg = item.error or "Download failed"
+                
+                # Check if it's a duplicate file error
+                if "already exists" in error_msg.lower():
+                    self._show_notification("Download Skipped", error_msg)
+                    QMessageBox.warning(
+                        self,
+                        "File Already Exists",
+                        f"{error_msg}\n\nRename the existing file or choose a different download location.",
+                    )
+                else:
+                    self._show_notification("Download Error", error_msg)
+                
+                # Re-enable UI
+                QTimer.singleShot(0, self._on_download_finished)
+                
+            elif item.status in [QueueItemStatus.COMPLETED, QueueItemStatus.CANCELLED]:
                 # Download finished - re-enable UI and clear input
                 QTimer.singleShot(0, self._on_download_finished)
             
@@ -2044,6 +2169,8 @@ class MainWindow(QMainWindow):
     
     def closeEvent(self, event):
         """Handle window close event"""
-        self.clipboard_monitor.stop()
+        # Stop clipboard monitor if it was initialized
+        if self._clipboard_monitor:
+            self.clipboard_monitor.stop()
         self.theme_manager.save_theme(self.theme_manager.get_current_mode())
         event.accept()

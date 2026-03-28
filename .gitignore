@@ -41,6 +41,10 @@ ENV/
 *~
 .DS_Store
 
+# Qwen IDE Settings
+.qwen/
+**/.qwen/
+
 # Testing
 .pytest_cache/
 .coverage
@@ -49,9 +53,11 @@ htmlcov/
 
 # Logs
 *.log
+logs/
 
 # Test files
 tests/
+test_*.py
 
 # Temporary files
 tmp/
@@ -60,3 +66,11 @@ temp/
 
 # FFmpeg binaries (will be installed separately)
 ffmpeg/
+
+# Documentation (Product/Mockup files)
+prd.md
+uimockup.md
+
+# Backup files
+*_backup.py
+*.orig

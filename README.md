@@ -12,7 +12,7 @@
 Aplikasi ini dibangun di atas fondasi teknologi yang jauh lebih stabil daripada hubungan Anda dengan algoritma media sosial:
 
 - **Core Engine:** [yt-dlp](https://github.com/yt-dlp/yt-dlp) — Satu-satunya alasan mengapa aplikasi ini benar-benar bekerja.
-- **GUI Framework:** [PySide6 (Qt 6)](https://doc.qt.io/qtforpython-6/) — Cross-platform framework dengan Liquid Glass styling untuk pengalaman visual yang modern.
+- **GUI Framework:** [PySide6 (Qt 6)](https://doc.qt.io/qtforpython-6/) — Cross-platform framework untuk pengalaman visual yang modern.
 - **Processing:** [FFmpeg](https://ffmpeg.org/) — Tukang jahit paket data audio dan video Anda.
 - **Language:** Python 3.11+ — Bahasa yang sama yang digunakan NASA, tapi di sini kita menggunakannya untuk men-download Reels.
 

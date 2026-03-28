@@ -12,16 +12,16 @@
 Aplikasi ini dibangun di atas fondasi teknologi yang jauh lebih stabil daripada hubungan Anda dengan algoritma media sosial:
 
 - **Core Engine:** [yt-dlp](https://github.com/yt-dlp/yt-dlp) — Satu-satunya alasan mengapa aplikasi ini benar-benar bekerja.
-- **GUI Framework:** [PySide6 (Qt 6)](https://doc.qt.io/qtforpython-6/) — Memberikan antarmuka macOS 26 (Sequoia) yang terlalu premium untuk sekadar mengunduh video meme.
+- **GUI Framework:** [PySide6 (Qt 6)](https://doc.qt.io/qtforpython-6/) — Cross-platform framework dengan Liquid Glass styling untuk pengalaman visual yang modern.
 - **Processing:** [FFmpeg](https://ffmpeg.org/) — Tukang jahit paket data audio dan video Anda.
 - **Language:** Python 3.11+ — Bahasa yang sama yang digunakan NASA, tapi di sini kita menggunakannya untuk men-download Reels.
 
 ---
 
 ## 📖 Mengapa SMdown?
-Mari kita jujur: Media sosial ingin memenjara video favorit Anda di dalam "taman vertikal" mereka. SMdown hadir sebagai sertifikat pembebasan untuk video-video tersebut. 
+Mari kita jujur: Media sosial ingin memenjara video favorit Anda di dalam "taman vertikal" mereka. SMdown hadir sebagai sertifikat pembebasan untuk video-video tersebut.
 
-Didesain khusus untuk macOS dengan estetika **Liquid Glass**, SMdown bukan hanya sekadar *tool*, tapi sebuah pernyataan bahwa Anda memiliki kendali penuh atas bit dan byte yang melintasi layar Anda.
+Dengan estetika **Liquid Glass** yang modern, SMdown bukan hanya sekadar *tool*, tapi sebuah pernyataan bahwa Anda memiliki kendali penuh atas bit dan byte yang melintasi layar Anda.
 
 ### Platform yang Kami "Bantu" Bebaskan:
 - ✅ **YouTube** (Termasuk Shorts yang membuat Anda kecanduan)

@@ -21,7 +21,14 @@ Aplikasi ini dibangun di atas fondasi teknologi yang jauh lebih stabil daripada 
 ## 📖 Mengapa SMdown?
 Mari kita jujur: Media sosial ingin memenjara video favorit Anda di dalam "taman vertikal" mereka. SMdown hadir sebagai sertifikat pembebasan untuk video-video tersebut.
 
-Dengan estetika **Liquid Glass** yang modern, SMdown bukan hanya sekadar *tool*, tapi sebuah pernyataan bahwa Anda memiliki kendali penuh atas bit dan byte yang melintasi layar Anda.
+**Performance yang Bicara:**
+- ⚡ **Startup ~5 detik** — Optimized dengan lazy loading dan ONEDIR build
+- 🚀 **Native Apple Silicon** — ARM64 native untuk M1-M4, tanpa Rosetta overhead
+- 📥 **Parallel Downloads** — Video + audio download terpisah, auto-merge dengan FFmpeg
+- 🛡️ **Duplicate Detection** — Skip file yang sudah ada, hemat bandwidth dan storage
+- 🧵 **Smart Threading** — Background threads dengan proper daemon management, UI tetap responsive
+
+SMdown bukan tentang terlihat cantik—tapi tentang **mengirim hasil dengan efisien**.
 
 ### Platform yang Kami "Bantu" Bebaskan:
 - ✅ **YouTube** (Termasuk Shorts yang membuat Anda kecanduan)
